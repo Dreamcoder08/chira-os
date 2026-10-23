@@ -1,0 +1,3 @@
+# Preserve Archify's validated bytes; renderer whitespace is generated content.
+docs/architecture/generated/*.html -whitespace linguist-generated=true
+packages/contracts/src/api.d.ts linguist-generated=true

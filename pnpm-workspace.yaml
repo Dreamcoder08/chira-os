@@ -1,0 +1,12 @@
+packages:
+  - apps/*
+  - packages/*
+minimumReleaseAge: 4320
+minimumReleaseAgeExclude:
+  - better-auth
+  - '@better-auth/*'
+  - fastify
+  - vitest
+allowBuilds:
+  esbuild: true
+  sharp: true

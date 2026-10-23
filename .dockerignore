@@ -1,0 +1,10 @@
+.git
+.env
+.env.*
+node_modules
+.local
+.superpowers
+test-results
+playwright-report
+**/dist
+docs/architecture/generated

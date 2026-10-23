@@ -1,0 +1,19 @@
+name: Reportar un problema
+description: Fallo funcional con datos sintéticos, sin secretos ni datos de productores.
+body:
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Qué ocurrió y qué esperabas
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Pasos para reproducir con datos sintéticos
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Navegador, dispositivo y estado de conectividad

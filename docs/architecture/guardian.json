@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CHIRA OS · Diseño de Guardian",
+    "locale": "es",
+    "output": "docs/architecture/generated/guardian.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "team",
+      "type": "external",
+      "label": "Equipo de campo",
+      "sublabel": "Técnico y coordinador",
+      "pos": [40, 230],
+      "size": [150, 68]
+    },
+    {
+      "id": "pwa",
+      "type": "frontend",
+      "label": "PWA Guardian",
+      "sublabel": "React · formularios y revisión",
+      "pos": [300, 230],
+      "size": [190, 68]
+    },
+    {
+      "id": "local",
+      "type": "database",
+      "label": "IndexedDB",
+      "sublabel": "Borradores y fotos pendientes",
+      "pos": [300, 460],
+      "size": [190, 68]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API modular",
+      "sublabel": "Fastify · casos de uso",
+      "pos": [700, 230],
+      "size": [170, 68]
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "Identidad",
+      "sublabel": "Sesión en servidor",
+      "pos": [700, 40],
+      "size": [170, 68]
+    },
+    {
+      "id": "files",
+      "type": "database",
+      "label": "Fotos privadas",
+      "sublabel": "Adaptador local / S3",
+      "pos": [700, 460],
+      "size": [170, 68]
+    },
+    {
+      "id": "postgres",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "PostGIS · RLS · outbox",
+      "pos": [1060, 230],
+      "size": [180, 68]
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "Worker Guardian",
+      "sublabel": "pg-boss · permisos propios",
+      "pos": [1060, 460],
+      "size": [180, 68]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Dispositivo asignado",
+      "wraps": ["pwa", "local"]
+    },
+    {
+      "kind": "region",
+      "label": "Aplicación local · sin exposición pública",
+      "wraps": ["api", "auth", "files"]
+    }
+  ],
+  "connections": [
+    {
+      "id": "visits",
+      "from": "team",
+      "to": "pwa",
+      "label": "Visitas",
+      "variant": "emphasis"
+    },
+    {
+      "id": "offline",
+      "from": "pwa",
+      "to": "local",
+      "label": "Guardar offline"
+    },
+    {
+      "id": "requests",
+      "from": "pwa",
+      "to": "api",
+      "label": "Mismo origen",
+      "variant": "emphasis"
+    },
+    {
+      "id": "session",
+      "from": "api",
+      "to": "auth",
+      "label": "Verificar sesión",
+      "variant": "security"
+    },
+    {
+      "id": "sql",
+      "from": "api",
+      "to": "postgres",
+      "label": "SQL + RLS",
+      "variant": "security"
+    },
+    {
+      "id": "photos",
+      "from": "api",
+      "to": "files",
+      "label": "Fotos autorizadas",
+      "variant": "security"
+    },
+    {
+      "id": "jobs",
+      "from": "postgres",
+      "to": "worker",
+      "label": "Outbox y trabajos",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Diseño, no auditoría",
+      "items": [
+        "Describe la base implementada y sus límites previstos.",
+        "La validez de los controles se comprueba con pruebas independientes del diagrama."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Límites explícitos",
+      "items": [
+        "El servidor valida sesión, membresía y acceso al recurso.",
+        "La revocación remota no borra datos de un teléfono desconectado.",
+        "No se diagnostican enfermedades ni se envían mensajes externos."
+      ]
+    }
+  ]
+}

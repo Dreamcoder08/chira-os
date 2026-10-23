@@ -1,0 +1,176 @@
+# CHIRA OS · Guardian
+
+Inteligencia para cuidar el valle del Chira. Base funcional para registrar parcelas,
+capturar inspecciones sin conexión y coordinar su revisión agronómica.
+
+**Estado: desarrollo local con datos sintéticos.** No está desplegado ni aprobado para
+producción. Una fotografía no confirma Fusarium R4T ni otra enfermedad.
+
+## Arranque local
+
+Requisitos: Git, Node **24.19+ de la rama 24**, pnpm **11.25.0**, Docker con Compose.
+Linux/macOS para los scripts de copias y análisis con Bash y tar. No se contratan servicios.
+
+```bash
+git clone https://github.com/Dreamcoder08/chira-os.git
+cd chira-os
+pnpm install --frozen-lockfile
+pnpm setup:local
+docker compose up -d --wait db
+pnpm db:migrate
+pnpm db:seed
+pnpm dev
+```
+
+Abre **http://localhost:5173**. Usa `localhost`, no una IP de red: el origen forma parte
+del control de sesiones. El backend de desarrollo escucha solo en `127.0.0.1:3001`.
+
+El seed crea `tecnico@chira.test`, `coordinador@chira.test` y un usuario de otra asociación.
+La contraseña aleatoria se guarda únicamente en **`.local/demo-credentials.json`**, con
+permisos restringidos. Ábrelo localmente; no lo pegues en incidencias, capturas ni commits.
+El seed es idempotente y está bloqueado fuera de bases locales de desarrollo.
+
+En otra terminal, ejecuta `pnpm worker` para procesar seguimientos internos. El worker
+no manda correo ni mensajes externos. No necesita las credenciales de autenticación.
+
+## Probar el flujo
+
+1. Entra como técnico y pulsa **Preparar trabajo offline** para descargar tus parcelas.
+2. Desconecta la red, crea una inspección, completa bioseguridad y añade una fotografía.
+3. Guarda en el dispositivo y vuelve a abrir la aplicación. El borrador seguirá visible.
+4. Recupera conexión y sincroniza. Los envíos se reintentan sin duplicar registros.
+5. Sal y entra como coordinador para revisar, señalar seguimiento y exportar datos.
+
+Los conflictos conservan la copia local y requieren una decisión explícita. Cerrar sesión
+elimina la información local; si hay pendientes, pide confirmar su descarte. Si sales offline,
+una marca persistente impide reutilizar la sesión y solicita su revocación al reconectar.
+La revocación remota no puede borrar un teléfono que permanece desconectado.
+
+## Arquitectura
+
+Monolito modular hexagonal: dominio y casos de uso independientes de infraestructura,
+adaptadores PostgreSQL/archivos/S3 y composición en API/worker. Contratos HTTP compartidos
+y cliente generado; la interfaz no importa código de servidor.
+
+| Unidad               | Responsabilidad                                              |
+| -------------------- | ------------------------------------------------------------ |
+| `apps/web`           | React/Vite PWA, formularios, revisión e IndexedDB            |
+| `apps/api`           | Fastify, sesión, autorización, validación y HTTP             |
+| `apps/worker`        | Outbox y pg-boss con rol SQL propio                          |
+| `packages/domain`    | Reglas agrícolas, casos de uso y puertos                     |
+| `packages/data`      | SQL/RLS, Drizzle de identidad, persistencia y almacenamiento |
+| `packages/contracts` | Esquemas de entrada/salida y tipos OpenAPI generados         |
+
+React Query administra las lecturas; las consultas a IndexedDB usan `networkMode: always`.
+MapLibre se carga al solicitar el mapa. La vista muestra puntos, sin cartografía o servicios
+externos. Los datos de inspecciones se presentan como texto, no HTML.
+
+Lee [las decisiones de arquitectura](docs/architecture/decisions.md), el [diseño de seguridad](docs/security.md)
+y la [revisión independiente y sus correcciones](docs/security-review.md).
+
+## Comprobaciones
+
+```bash
+pnpm check
+pnpm test:integration
+pnpm test:e2e
+pnpm contracts
+pnpm security:deps
+pnpm run sbom
+pnpm security:scan
+```
+
+Las pruebas de integración y navegador usan los usuarios sintéticos y revocan sus sesiones.
+Ejecuta esas suites **secuencialmente**, sin un usuario trabajando en la demo. No las ejecutes
+contra bases con información real. Playwright requiere `pnpm exec playwright install chromium`;
+algunas distribuciones también necesitan `pnpm exec playwright install --with-deps chromium`.
+
+`pnpm check` comprueba tipos, lint, límites arquitectónicos, formato, reglas y build. CI añade
+PostGIS real, navegador, contratos regenerados, Archify, SBOM, vulnerabilidades, secretos,
+imagen y restauración. Las acciones están fijadas por SHA; no hay merge ni despliegue automático.
+
+## Diagramas con Archify
+
+Los diagramas son explicaciones del diseño, no una auditoría ni mediciones de infraestructura.
+Sus fuentes editables son [guardian.json](docs/architecture/guardian.json) y [sync.json](docs/architecture/sync.json).
+Descarga los HTML para abrirlos localmente: [arquitectura](docs/architecture/generated/guardian.html)
+y [sincronización](docs/architecture/generated/sync.html).
+
+```bash
+pnpm diagrams:setup
+pnpm exec playwright install chromium
+export ARCHIFY_CHROME="$(node --input-type=module -e "import { chromium } from '@playwright/test'; process.stdout.write(chromium.executablePath())")"
+pnpm diagrams:build
+```
+
+La preparación obtiene una revisión fija de [Archify](https://github.com/tt-a1i/archify), sin
+instalador global ni actualizaciones automáticas. `finalize` valida, renderiza y verifica
+en navegador. Los recibos de nuevas ejecuciones quedan en `.local/diagram-evidence/`.
+
+## Aplicación empaquetada
+
+Después de migrar y sembrar, detén `pnpm dev` para liberar el puerto:
+
+```bash
+docker compose -f compose.yaml -f compose.app.yaml up -d --build
+docker compose -f compose.yaml -f compose.app.yaml ps
+```
+
+La API y el worker usan un runtime **distroless no root**, filesystem de solo lectura y
+capacidades eliminadas. El Compose adicional sirve una demo HTTP local; no es un despliegue
+de producción. En entornos con CA corporativa, proporciona `CODEX_PROXY_CERT` a Compose o
+usa `docker build --secret id=proxy_ca,src=/ruta/ca.pem -t chira-os:local .`. Nunca desactives TLS.
+
+La API empaquetada guarda fotos en el volumen `chira-os_photos`; el modo `pnpm dev` usa
+`.local/photos`. **No alternes esos modos con evidencia que quieras conservar sin migrar
+también sus archivos**: comparten la base local, pero no el directorio de fotografías.
+
+```bash
+pnpm security:image
+pnpm security:database
+```
+
+El análisis de imagen también incluye bibliotecas del sistema y paquetes presentes en ella;
+no equivale a `pnpm audit`.
+
+**Verificación pendiente en este entorno:** la imagen inicial PostGIS 17/3.5 arrastraba
+Debian 11 y fue descartada tras su análisis. Compose fija ahora PostGIS 17/3.6 por el digest
+obtenido del registro. La descarga final fue interrumpida por HTTP 503; las pruebas de esta
+sesión se ejecutaron con la imagen inicial y no acreditan todavía la imagen sustituta.
+Antes de usar el piloto, ejecutar desde un entorno con red `docker compose up -d --wait db`,
+`pnpm db:migrate`, las suites y `pnpm security:database`. CI lo exige y no omite CVE.
+
+## Copias y recuperación
+
+En una ventana de mantenimiento, detén API y worker para que base y archivos no cambien.
+Mantén PostgreSQL encendido. Copias y credenciales son confidenciales.
+
+```bash
+# Modo pnpm dev: después de detener sus procesos
+pnpm backup .local/backups/piloto-01
+pnpm restore:check .local/backups/piloto-01
+
+# Modo Compose empaquetado: detener ambos servicios y respaldar su volumen
+docker compose -f compose.yaml -f compose.app.yaml stop api worker
+BACKUP_STORAGE_MODE=compose pnpm backup .local/backups/empaquetado-01
+pnpm restore:check .local/backups/empaquetado-01
+```
+
+La copia contiene dump PostgreSQL, fotografías y manifiesto SHA-256. La verificación rechaza
+corrupción, restaura en una base temporal, decodifica las fotografías y elimina los recursos
+temporales. Solo admite copias locales de confianza; el manifiesto detecta corrupción, no
+autentica a quien entrega un archivo. Define cifrado externo y retención antes de datos reales.
+
+## Desarrollo con ODD
+
+[AGENTS.md](AGENTS.md) adapta **Organic Driven Development** de
+[Gentleman AI](https://github.com/Gentleman-Programming/gentle-ai): explorar, conservar el
+contexto cuando el trabajo lo necesita, implementar y verificar proporcionalmente. No exige
+instalar Gentle AI globalmente ni otorga acceso a secretos a herramientas o agentes.
+
+Fuera de esta entrega: diagnóstico automático, agricultores con cuenta propia, Water,
+Trade, satélites, sensores, notificaciones externas y despliegue. La revisión previa al piloto
+debe acordar responsable operativo, dispositivos, identidad reforzada, recuperación,
+protección de datos personales y proveedor de infraestructura.
+
+Repositorio privado. No se concede una licencia de código abierto en esta etapa.

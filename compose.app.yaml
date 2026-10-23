@@ -1,0 +1,45 @@
+# Optional local packaged application. Run migrations and seed first.
+services:
+  api:
+    build:
+      context: .
+      secrets:
+        - proxy_ca
+    image: chira-os:local
+    environment:
+      NODE_ENV: development
+      HOST: 0.0.0.0
+      PORT: 3001
+      APP_ORIGIN: http://localhost:5173
+      DATABASE_URL: postgres://chira_app:${APP_DB_PASSWORD}@db:5432/chira
+      AUTH_DATABASE_URL: postgres://chira_auth:${AUTH_DB_PASSWORD}@db:5432/chira
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      STORAGE_DRIVER: local
+      STORAGE_PATH: /app/.local/photos
+    ports: ['127.0.0.1:5173:3001']
+    volumes: ['photos:/app/.local/photos']
+    depends_on:
+      db: { condition: service_healthy }
+    read_only: true
+    tmpfs: ['/tmp']
+    cap_drop: ['ALL']
+    security_opt: ['no-new-privileges:true']
+  worker:
+    image: chira-os:local
+    command: ['--import', 'tsx', 'apps/worker/src/main.ts']
+    environment:
+      NODE_ENV: development
+      WORKER_DATABASE_URL: postgres://chira_worker:${WORKER_DB_PASSWORD}@db:5432/chira
+    depends_on:
+      db: { condition: service_healthy }
+    healthcheck:
+      disable: true
+    read_only: true
+    tmpfs: ['/tmp']
+    cap_drop: ['ALL']
+    security_opt: ['no-new-privileges:true']
+volumes:
+  photos:
+secrets:
+  proxy_ca:
+    file: ${CODEX_PROXY_CERT:-/etc/ssl/certs/ca-certificates.crt}

@@ -1,0 +1,19 @@
+name: chira-os
+services:
+  db:
+    image: postgis/postgis:17-3.6@sha256:5cf98659a260df8b9a5123ea9a9150e317c34d8669045f0f937941c6dadb1f64
+    environment:
+      POSTGRES_DB: chira
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run pnpm exec tsx scripts/setup-local.ts}
+    ports:
+      - '127.0.0.1:5432:5432'
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d chira']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    security_opt: ['no-new-privileges:true']
+volumes:
+  postgres:

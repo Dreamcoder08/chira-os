@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Guardian · Sincronización con evidencia",
+    "locale": "es",
+    "output": "docs/architecture/generated/sync.html",
+    "quality_profile": "showcase"
+  },
+  "participants": [
+    {
+      "id": "tech",
+      "type": "external",
+      "label": "Técnico"
+    },
+    {
+      "id": "pwa",
+      "type": "frontend",
+      "label": "PWA"
+    },
+    {
+      "id": "local",
+      "type": "database",
+      "label": "IndexedDB"
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API"
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "PostgreSQL"
+    },
+    {
+      "id": "files",
+      "type": "database",
+      "label": "Fotos privadas"
+    }
+  ],
+  "messages": [
+    {
+      "id": "record",
+      "from": "tech",
+      "to": "pwa",
+      "y": 170,
+      "label": "Registrar visita sin señal"
+    },
+    {
+      "id": "save",
+      "from": "pwa",
+      "to": "local",
+      "y": 215,
+      "label": "Persistir borrador y fotografías",
+      "variant": "emphasis"
+    },
+    {
+      "id": "resume",
+      "from": "local",
+      "to": "pwa",
+      "y": 260,
+      "label": "Recuperar al reabrir",
+      "variant": "return"
+    },
+    {
+      "id": "edit",
+      "from": "pwa",
+      "to": "api",
+      "y": 310,
+      "label": "PUT borrador + clave de operación",
+      "variant": "emphasis",
+      "note": "Al reconectar o reintentar manualmente."
+    },
+    {
+      "id": "authorize",
+      "from": "api",
+      "to": "db",
+      "y": 380,
+      "label": "Membresía, RLS y versión",
+      "variant": "security"
+    },
+    {
+      "id": "version",
+      "from": "db",
+      "to": "api",
+      "y": 425,
+      "label": "Guardar o responder conflicto 409",
+      "variant": "return"
+    },
+    {
+      "id": "upload",
+      "from": "pwa",
+      "to": "api",
+      "y": 475,
+      "label": "Cargar fotografías pendientes"
+    },
+    {
+      "id": "encode",
+      "from": "api",
+      "to": "files",
+      "y": 525,
+      "label": "Validar, recodificar y guardar"
+    },
+    {
+      "id": "confirm",
+      "from": "api",
+      "to": "db",
+      "y": 575,
+      "label": "Confirmar adjuntos"
+    },
+    {
+      "id": "submit",
+      "from": "pwa",
+      "to": "api",
+      "y": 625,
+      "label": "Enviar inspección + versión"
+    },
+    {
+      "id": "commit",
+      "from": "api",
+      "to": "db",
+      "y": 675,
+      "label": "Evidencia inmutable y auditoría"
+    },
+    {
+      "id": "received",
+      "from": "api",
+      "to": "pwa",
+      "y": 725,
+      "label": "Confirmar recepción",
+      "variant": "return"
+    },
+    {
+      "id": "clean",
+      "from": "pwa",
+      "to": "local",
+      "y": 775,
+      "label": "Retirar borrador confirmado"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Fallo recuperable",
+      "items": [
+        "Una interrupción conserva el borrador y las claves idempotentes.",
+        "Un conflicto exige decisión explícita; no sobrescribe evidencia.",
+        "Cada petición vuelve a comprobar permisos y sesión."
+      ]
+    }
+  ]
+}
