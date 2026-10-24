@@ -1,7 +1,37 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import type { Inspection } from '../../../../packages/contracts/src/schemas.ts';
 import { db, type Draft } from '../lib/offline.ts';
 import { request } from '../lib/api.ts';
+
+// A draft keeps its photos as blobs in IndexedDB, so they have no server URL
+// yet. Without this the technician sees an empty card and cannot tell whether
+// the evidence survived, which is exactly what the offline flow promises.
+function DraftPhotos({ photos }: { photos: Draft['photos'] }) {
+  const [urls, setUrls] = useState<{ id: string; url: string }[]>([]);
+  useEffect(() => {
+    const created = photos.map((photo) => ({
+      id: photo.id,
+      url: URL.createObjectURL(photo.blob),
+    }));
+    setUrls(created);
+    return () => {
+      for (const photo of created) URL.revokeObjectURL(photo.url);
+    };
+  }, [photos]);
+  if (!urls.length) return null;
+  return (
+    <div className="photos">
+      {urls.map((photo) => (
+        <img
+          key={photo.id}
+          src={photo.url}
+          alt="Evidencia de inspección"
+          loading="lazy"
+        />
+      ))}
+    </div>
+  );
+}
 
 export function InspectionCard({
   inspection,
@@ -93,6 +123,9 @@ export function InspectionCard({
           ? 'Bioseguridad registrada'
           : 'Checklist pendiente'}
       </div>
+      {draft && draft.photos.length > 0 && (
+        <DraftPhotos photos={draft.photos} />
+      )}
       {!draft && inspection.photoIds.length > 0 && (
         <div className="photos">
           {inspection.photoIds.map((id) => (

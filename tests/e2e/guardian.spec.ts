@@ -46,9 +46,27 @@ test('offline field evidence survives reopening, synchronizes and receives human
   await expect(
     page.getByText('Pendiente de sincronizar', { exact: true }),
   ).toBeVisible();
+  // The technician must be able to confirm the photo is stored on the device
+  // before syncing; a card that hides it looks like lost evidence.
+  await expect
+    .poll(() =>
+      page
+        .getByAltText('Evidencia de inspección')
+        .first()
+        .evaluate((image) => (image as HTMLImageElement).naturalWidth),
+    )
+    .toBeGreaterThan(0);
   await page.reload();
   await expect(page.getByText(notes, { exact: true })).toBeVisible();
   await expect(page.getByText('Sin conexión', { exact: true })).toBeVisible();
+  await expect
+    .poll(() =>
+      page
+        .getByAltText('Evidencia de inspección')
+        .first()
+        .evaluate((image) => (image as HTMLImageElement).naturalWidth),
+    )
+    .toBeGreaterThan(0);
   await context.setOffline(false);
   await page.getByRole('button', { name: 'Sincronizar ahora' }).click();
   await expect(

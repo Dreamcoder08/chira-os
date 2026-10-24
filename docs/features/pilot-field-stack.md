@@ -42,6 +42,11 @@ usuario, sin PR. Runners: `pnpm check`, `pnpm test:integration`, `pnpm test:e2e`
   hipótesis, muestra mínima, qué se registra por sesión, criterios de éxito, plantilla de
   resultados y los límites que hay que declarar al reportar. Evidencia: `docs/pilot/protocol.md`
   existe, el runbook y el README lo enlazan, y no afirma tracción alguna.
+- **S8** — Un borrador guardado en el dispositivo muestra sus fotografías antes de sincronizar,
+  tanto al guardarlo como después de recargar la página sin conexión. Las imágenes se leen de los
+  blobs de IndexedDB con URLs de objeto y se liberan al desmontar la tarjeta; el técnico no debe
+  ver una tarjeta vacía que parezca evidencia perdida. Evidencia: prueba E2E que espera
+  `naturalWidth > 0` en la miniatura del borrador antes y después de recargar offline.
 
 ## Tasks
 
@@ -56,6 +61,8 @@ usuario, sin PR. Runners: `pnpm check`, `pnpm test:integration`, `pnpm test:e2e`
 - **T6** (S6) inline — hecho. `pnpm user:password`, `resetUserPassword` y las pruebas unitaria y de
   integración.
 - **T7** (S7) inline — hecho. `docs/pilot/protocol.md` con el protocolo y la plantilla.
+- **T8** (S8) inline — hecho. `DraftPhotos` en `InspectionCard.tsx` y las comprobaciones E2E del
+  borrador con fotografía.
 
 ## Log
 
@@ -123,3 +130,10 @@ error occurred when fetching the script`. Chromium no registra un service worker
   plantilla de resultados, además de los límites a declarar (red local, sin correo saliente, datos
   sintéticos, un servidor, una sola sesión no es adopción). Es documentación: se verifica por lectura
   estructural, no por ejecución.
+- **L12** — Defecto encontrado al revisar el flujo offline: la tarjeta de un borrador no
+  renderizaba ninguna fotografía, porque las imágenes solo se pintaban con `photoIds` del servidor
+  (`!draft && inspection.photoIds.length > 0`). El técnico guardaba cinco fotos y veía una tarjeta
+  sin evidencia, justo lo que el piloto promete conservar. Se agregó la prueba E2E primero: falló
+  con `Timeout 10000ms exceeded while waiting on the predicate` sobre `naturalWidth`; después se
+  implementó `DraftPhotos` con `URL.createObjectURL` y limpieza en el desmontaje, y la misma prueba
+  pasó. `pnpm check` 0, E2E 4/4, integración 3 archivos/15 pruebas.
