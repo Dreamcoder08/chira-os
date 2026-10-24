@@ -7,9 +7,25 @@ updates:
     groups:
       tooling:
         dependency-type: development
+    ignore:
+      # Majors stay manual until CI can verify them again. The current noise
+      # (typescript 7, @types/node 26) contradicts the Node 24 engine pin.
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+    ignore:
+      # Actions stay pinned by commit SHA; a major tag can change inputs and
+      # break the workflow silently outside review.
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
   - package-ecosystem: docker
     directory: /
     schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+    ignore:
+      # The runtime image must stay on Node 24 to match the engines range.
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
