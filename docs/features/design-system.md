@@ -44,7 +44,7 @@ Runners: `pnpm check`, `pnpm test:e2e`, `pnpm test:integration`.
 - T3 — S3, inline — hecho (`f4f103f`) — shell móvil: barra inferior, header, banda de sincronización, hojas y acción de guardado al pulgar.
 - T4 — S4, inline — hecho (`f4f103f`) — cartografía local, worker de MapLibre, escala y controles propios.
 - T5 — S6, inline — hecho (`2dac13e`) — foco atrapado en las hojas, Escape para cerrar y 36 pares de contraste medidos en navegador.
-- T6 — S5, S7, inline — hecho (`pendiente`) — verificación completa y registro en docs.
+- T6 — S5, S7, inline — hecho (`6b4fbaa`) — verificación completa y registro en docs.
 
 ## Log
 
@@ -167,3 +167,12 @@ completa está en `docs/verification.md`; el README describe la interfaz sin
 atribuirle capturas ni usuarios reales. Lo que este trabajo **no** prueba: que un
 técnico real use la interfaz sin ayuda. Eso lo mide el protocolo del piloto, no
 una captura de pantalla.
+
+### L19 — CI verde con el sistema de diseño
+
+El run `40130545368` sobre `6b4fbaa` termina en `success` con el job `guardian`
+completo: instalación, imagen de base propia, migraciones y semilla, `pnpm check`,
+integración, contratos, E2E en Chromium, diagramas validados, dependencias, SBOM,
+escaneo de sistema de archivos, imagen de aplicación, imagen de base de datos,
+backup y restauración. El check requerido sigue siendo `guardian` y `main` está
+protegido.
