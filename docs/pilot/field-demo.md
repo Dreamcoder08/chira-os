@@ -119,6 +119,17 @@ El comando imprime la contraseña generada una sola vez. No la guarda en ningún
 archivo: hay que entregarla en el momento y no se puede recuperar después. El
 comando solo funciona contra la base local del piloto.
 
+Si alguien olvida la contraseña, el operador la reemplaza sin correo saliente:
+
+```bash
+pnpm user:password --email tecnica@chira.test
+```
+
+El comando imprime una contraseña nueva, cierra todas las sesiones abiertas de
+esa cuenta y conserva el rol y la asociación. La contraseña anterior deja de
+servir de inmediato: si el técnico tenía el teléfono con sesión abierta, tendrá
+que volver a entrar con la nueva.
+
 ## 5. Verificar el stack antes de la visita
 
 Con el piloto levantado:
@@ -165,7 +176,10 @@ Con el teléfono conectado a la misma red:
   `APP_ORIGIN`, reiniciar el proxy con el nuevo `PILOT_HOST` y volver a instalar
   la CA solo si el certificado anterior no cubría esa IP.
 - **`pnpm user:create` rechaza el correo**: ya existe una cuenta con ese correo;
-  usar otro o revisar la base del piloto.
+  usar otro, o `pnpm user:password --email <correo>` si lo que hace falta es
+  devolver el acceso a la cuenta existente.
+- **Un técnico no puede entrar con su contraseña**: reiniciarla con
+  `pnpm user:password --email <correo>`; el comando cierra sus sesiones abiertas.
 
 ## 8. Cerrar el piloto
 

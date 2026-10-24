@@ -1,4 +1,4 @@
-/** Pure parsing and validation for `pnpm user:create`, kept separate to test it. */
+/** Pure parsing and validation for the account commands, kept separate to test it. */
 export type Role = 'technician' | 'coordinator';
 
 export type UserInput = {
@@ -11,6 +11,8 @@ export type UserInput = {
 const roles: Role[] = ['technician', 'coordinator'];
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+export type PasswordResetInput = { email: string };
+
 export function describeUsage(): string {
   return [
     'Usage: pnpm user:create --email <email> --name "<full name>" \\',
@@ -18,7 +20,15 @@ export function describeUsage(): string {
   ].join('\n');
 }
 
-export function parseUserArgs(argv: string[]): UserInput {
+export function describePasswordUsage(): string {
+  return 'Usage: pnpm user:password --email <email>';
+}
+
+/**
+ * Reads `--key=value` and `--key value` pairs. One implementation so both
+ * commands accept exactly the same flag syntax.
+ */
+function parseFlags(argv: string[]): Map<string, string> {
   const values = new Map<string, string>();
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index]!;
@@ -33,6 +43,25 @@ export function parseUserArgs(argv: string[]): UserInput {
       throw new Error(`Missing value for --${key}`);
     values.set(key, value);
   }
+  return values;
+}
+
+export function parsePasswordArgs(argv: string[]): PasswordResetInput {
+  const values = parseFlags(argv);
+  return { email: values.get('email') ?? '' };
+}
+
+export function validatePasswordResetInput(
+  input: PasswordResetInput,
+): string[] {
+  const errors: string[] = [];
+  if (!emailPattern.test(input.email))
+    errors.push(`--email must be an email address, got "${input.email}"`);
+  return errors;
+}
+
+export function parseUserArgs(argv: string[]): UserInput {
+  const values = parseFlags(argv);
   return {
     email: values.get('email') ?? '',
     name: values.get('name') ?? '',

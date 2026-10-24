@@ -104,6 +104,13 @@ propia imagen desde `Dockerfile.db`, derivada de `postgis/postgis:17-3.6-alpine`
   después. Pruebas: unitarias 4/4, integración 3/3 contra PostgreSQL real (rol y asociación
   correctos, correo duplicado y asociación inexistente rechazados), `pnpm check` 0 con 22 pruebas,
   E2E 4/4.
+- `pnpm user:password` devuelve el acceso a una cuenta existente sin correo saliente. Evidencia:
+  unitarias 6/6 e integración 3/3 contra PostgreSQL real, donde la sesión anterior queda en 401, la
+  contraseña anterior en 401 y la nueva entra en 200 con el mismo rol; un correo inexistente y una
+  cuenta sin credencial se rechazan. Prueba de mutación: sin el `DELETE` de sesiones la prueba falla
+  con «expected 0 to be greater than or equal to 1» y al restaurarlo vuelve a 3/3. Prueba de humo del
+  comando: alta temporal, reinicio con `closed sessions: 0`, correo inexistente con salida 1 y correo
+  inválido con salida 2 y el uso; las filas temporales se borraron (`auth_users` = 3, las sembradas).
 - El run de CI `40118873452` del commit `d5aa103` termina en `success` con el job `guardian`
   completo, incluidas `pnpm security:image`, `pnpm security:database` y la copia de seguridad con
   `pnpm restore:check`.

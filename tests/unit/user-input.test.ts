@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  parsePasswordArgs,
   parseUserArgs,
+  validatePasswordResetInput,
   validateUserInput,
 } from '../../scripts/lib/user-input.ts';
 
@@ -57,5 +59,26 @@ describe('pilot account input', () => {
     expect(errors[1]).toContain('--name');
     expect(errors[2]).toContain('--role');
     expect(errors[3]).toContain('--association');
+  });
+});
+
+describe('pilot password reset input', () => {
+  it('accepts the same flag syntax as account creation', () => {
+    expect(parsePasswordArgs(['--email=tecnico@chira.test'])).toEqual({
+      email: 'tecnico@chira.test',
+    });
+    expect(parsePasswordArgs(['--email', 'campo@chira.test'])).toEqual({
+      email: 'campo@chira.test',
+    });
+  });
+
+  it('rejects a missing or malformed email', () => {
+    expect(validatePasswordResetInput(parsePasswordArgs([]))).toHaveLength(1);
+    expect(
+      validatePasswordResetInput(parsePasswordArgs(['--email=tecnico'])),
+    ).toEqual(['--email must be an email address, got "tecnico"']);
+    expect(() => parsePasswordArgs(['--email'])).toThrow(
+      'Missing value for --email',
+    );
   });
 });

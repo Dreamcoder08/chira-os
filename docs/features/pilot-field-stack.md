@@ -24,10 +24,19 @@ usuario, sin PR. Runners: `pnpm check`, `pnpm test:integration`, `pnpm test:e2e`
 - **S4** — El runbook del piloto permite a un técnico entrar desde un teléfono, capturar una
   inspección sin red, sincronizarla y que un coordinador la revise. Documenta la instalación de
   la CA local en Android/iOS y lo que el piloto **no** cubre: invitaciones por correo,
-  recuperación de contraseña, despliegue en internet y cuentas de productor.
+  recuperación de contraseña por el propio usuario (la resuelve el operador con S6), despliegue
+  en internet y cuentas de productor.
 - **S5** — Nada de lo añadido deja secretos ni material de CA en el repositorio: la CA y el
   material generado viven bajo `.local/`, que está ignorado. La contraseña generada solo se
   imprime en la salida del comando, nunca se escribe en un archivo versionado.
+- **S6** — `pnpm user:password` devuelve el acceso a una cuenta existente cuando el técnico
+  olvida la contraseña: reemplaza la credencial por una nueva contraseña hasheada, cierra todas
+  las sesiones abiertas de esa cuenta, conserva la membresía y la asociación, e imprime la
+  nueva contraseña una sola vez. Se niega con un correo inexistente o con una cuenta sin
+  credencial de contraseña, y solo funciona contra la base local del piloto. Evidencia: prueba
+  de integración que inicia sesión antes del reinicio, reinicia, comprueba que la cookie
+  anterior y la contraseña anterior dejan de servir y que la nueva entra con el mismo rol; y una
+  prueba de humo del comando con sus códigos de salida.
 
 ## Tasks
 
@@ -39,6 +48,8 @@ usuario, sin PR. Runners: `pnpm check`, `pnpm test:integration`, `pnpm test:e2e`
 - **T4** (S3) inline — hecho. Prueba de integración: cuenta creada, inicio de sesión real, rol y
   asociación correctos.
 - **T5** (S4, S5) inline — hecho. `docs/pilot/field-demo.md` con el runbook y el alcance explícito.
+- **T6** (S6) inline — hecho. `pnpm user:password`, `resetUserPassword` y las pruebas unitaria y de
+  integración.
 
 ## Log
 
@@ -87,3 +98,16 @@ error occurred when fetching the script`. Chromium no registra un service worker
   (`ParcelForm` → `POST /api/v1/parcels`, con auditoría `parcel.created` y asignación a quien la
   crea), así que no hizo falta código nuevo; el runbook lo menciona como paso previo si la
   asociación no tiene parcelas. Lo único que faltaba era el alta de cuentas, que es T3.
+- **L10** — T6, decidido dentro del alcance autorizado del piloto: al leer el código quedaba un
+  callejón sin salida operativo. `pnpm user:create` se niega si el correo ya existe y no había
+  ninguna otra vía, así que un técnico que olvidara la contraseña a mitad del piloto no podía
+  volver a entrar. `pnpm user:password` lo resuelve sin correo saliente: transacción con
+  `UPDATE auth_accounts`, `DELETE FROM auth_sessions` y la membresía intacta. Evidencia:
+  `tests/unit/user-input.test.ts` 6/6; `tests/integration/user-password.test.ts` 3/3 contra
+  PostgreSQL real (sesión anterior 401, contraseña anterior 401, contraseña nueva 200 con el
+  mismo rol; correo inexistente y cuenta sin credencial rechazados); prueba de mutación: al
+  quitar el `DELETE` de sesiones la prueba falla con «expected 0 to be greater than or equal to
+  1», y al restaurarlo vuelve a 3/3. Prueba de humo del comando: alta de una cuenta temporal,
+  reinicio (`closed sessions: 0`), correo inexistente → salida 1, correo inválido → salida 2 con
+  el uso; la cuenta temporal y sus filas se borraron después (`SELECT count(*) FROM auth_users`
+  = 3, las sembradas).

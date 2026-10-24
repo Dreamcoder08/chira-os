@@ -53,7 +53,8 @@ PILOT_HOST=<IP-LOCAL> docker compose --profile pilot up -d proxy
 PILOT_HOST=<IP-LOCAL> pnpm pilot:check
 ```
 
-Las cuentas del piloto se crean desde la terminal con `pnpm user:create`; no hay autorregistro.
+Las cuentas del piloto se crean desde la terminal con `pnpm user:create`; no hay autorregistro, y
+`pnpm user:password` reemplaza la contraseña de una cuenta existente cuando alguien la olvida.
 El teléfono necesita el certificado de la autoridad local instalado, porque sin él el navegador
 no registra el service worker y no existe captura sin conexión. El procedimiento completo, el
 guion de la demostración y lo que el piloto **no** cubre están en
