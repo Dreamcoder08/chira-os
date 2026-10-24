@@ -1432,6 +1432,15 @@ input[type='checkbox'] {
   color: color-mix(in oklab, var(--sand-50) 74%, transparent);
 }
 
+/*
+ * The eyebrow sits on the brightest point of the gradient, where ink-500
+ * reaches 1.08:1. It inherits nothing useful from the panel, so it needs its
+ * own tone; 76% measures 5.12:1 against that stop.
+ */
+.welcome .eyebrow {
+  color: color-mix(in oklab, var(--sand-50) 76%, transparent);
+}
+
 .field-art {
   height: 132px;
   margin-top: 34px;

@@ -7,6 +7,7 @@ import {
   type Profile,
 } from '../lib/offline.ts';
 import { finishLogout, markLogoutPending } from '../lib/logout.ts';
+import { loginMessage } from '../lib/login-message.ts';
 
 export function Login({ onLogin }: { onLogin: (profile: Profile) => void }) {
   const [error, setError] = useState('');
@@ -41,10 +42,8 @@ export function Login({ onLogin }: { onLogin: (profile: Profile) => void }) {
       await db.open();
       await storeProfile(profile);
       onLogin(profile);
-    } catch {
-      setError(
-        'No se pudo iniciar sesión. Comprueba tus datos y la conexión. Si este equipo tenía otro usuario, cierra primero su sesión.',
-      );
+    } catch (cause) {
+      setError(loginMessage(cause));
     } finally {
       setBusy(false);
     }
