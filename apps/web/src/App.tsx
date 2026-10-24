@@ -47,6 +47,12 @@ export function App() {
   const [active, setActive] = useState<Parcel | null>(null);
   const [dockOpen, setDockOpen] = useState(true);
   const queryClient = useQueryClient();
+  // A toast that never leaves ends up covering the work it announces.
+  useEffect(() => {
+    if (!notice) return;
+    const timer = setTimeout(() => setNotice(''), 4000);
+    return () => clearTimeout(timer);
+  }, [notice]);
   const isCoordinator =
     profile?.memberships.find((m) => m.associationId === associationId)
       ?.role === 'coordinator';
@@ -365,7 +371,7 @@ export function App() {
             <Suspense
               fallback={<p className="ds-map-loading">Cargando mapa…</p>}
             >
-              <ParcelMap parcels={parcels} />
+              <ParcelMap parcels={parcels} activeId={active?.id} />
             </Suspense>
             <p className="ds-map-note">
               Referencia geográfica local. No incluye imágenes satelitales ni

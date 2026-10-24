@@ -41,8 +41,8 @@ Runners: `pnpm check`, `pnpm test:e2e`, `pnpm test:integration`.
 
 - T1 — S1, inline — hecho (`e262487`) — fundaciones: tokens, fuente, iconos y primitivas.
 - T2 — S2, inline — hecho (`8c783e9`) — consola de escritorio: rail, píldoras, tarjeta, dock y hojas laterales.
-- T3 — S3, inline — shell móvil: barra inferior, header, banda de sincronización y hojas.
-- T4 — S4, inline — cartografía local y controles propios.
+- T3 — S3, inline — hecho (`pendiente`) — shell móvil: barra inferior, header, banda de sincronización, hojas y acción de guardado al pulgar.
+- T4 — S4, inline — hecho (`pendiente`) — cartografía local, worker de MapLibre, escala y controles propios.
 - T5 — S6, inline — pasada de accesibilidad y contraste medido.
 - T6 — S5, S7, inline — verificación completa y registro en docs.
 
@@ -96,3 +96,48 @@ Runners: `pnpm check`, `pnpm test:e2e`, `pnpm test:integration`.
   borradores pendientes, la app abre en Revisión una sola vez por sesión (`useRef`), porque
   el trabajo sin enviar es lo primero que hay que ver. Evidencia: `pnpm check` 0,
   `pnpm test:e2e` 8/8 (36,9 s), `pnpm test:integration` 4 archivos / 17 tests.
+
+### L12 — El mapa salía vacío: worker de MapLibre
+
+MapLibre 6 carga su parser de GeoJSON en un worker aparte. Con Vite el archivo
+`maplibre-gl-worker.mjs` no se emite por sí solo, así que el worker fallaba con
+`Worker failed to load. Check that the worker URL is correct.` y ninguna fuente
+se parseaba: quedaba el fondo de papel y las etiquetas, nada más. Se resolvió con
+`import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'` y
+`maplibregl.setWorkerUrl(workerUrl)` al tope del módulo. El archivo ahora se emite
+(`maplibre-gl-worker-BrB25tGK.mjs`) y entra en la precarga del service worker.
+
+### L13 — Encuadre, escala y densidad
+
+Tres defectos vistos en capturas reales, no en el código: la parcela caía debajo
+del dock porque `fitBounds` usaba un padding fijo de 96 px; con una sola parcela
+no hay caja que encuadrar, así que ahora se centra con `easeTo` en el área libre;
+y la grilla de 1 km no cubría el viewport, por lo que su borde se veía como un
+rectángulo sin mapa. Se agregó además una barra de escala calculada en metros por
+píxel y se separó la grilla en líneas menores y mayores cada cinco.
+
+### L14 — El servidor de preview congela su lista de archivos
+
+`scripts/preview.ts` usa `@fastify/static` con `wildcard: false`: la lista de
+archivos se arma al arrancar. Después de cada `pnpm build` hay que reiniciarlo o
+sirve HTML para los hashes nuevos y la app queda en blanco. Queda anotado porque
+costó dos rondas de capturas en blanco.
+
+### L15 — Pulido del shell móvil
+
+La barra inferior tapaba las etiquetas de métricas y el pie; el botón «Registrar
+parcela» se partía en dos líneas junto al título; el aviso «Trabajo sincronizado.»
+se quedaba para siempre sobre el botón «Nueva inspección». Se apiló el encabezado
+de sección, se achicaron las etiquetas, se sumó relleno al pie, el aviso se
+autocierra a los 4 s y ya no intercepta toques (`pointer-events: none`). La
+pestaña Mapa en el teléfono ocupa la pantalla entre el header y la barra, con la
+nota de honestidad encima del lienzo.
+
+### L16 — Verificación de T3 y T4
+
+`pnpm check` sale 0 (tipos, eslint, depcruise, prettier, tests y build);
+`pnpm test:e2e` sale 0 con 8/8 en los proyectos `desktop` y `mobile` (40,7 s);
+`pnpm test:integration` sale 0 con 4 archivos y 17 tests. Capturas revisadas en
+1440×900, 834×1112 y 390×844; los únicos errores de consola son los tres 401 de
+la sonda de sesión previa al login. El candado de los hashes: se corrigen en un
+commit de documentación aparte cuando el commit real exista.
