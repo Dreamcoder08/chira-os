@@ -40,7 +40,7 @@ Runners: `pnpm check`, `pnpm test:e2e`, `pnpm test:integration`.
 ## Tasks
 
 - T1 — S1, inline — hecho (`ea30cd5`) — fundaciones: tokens, fuente, iconos y primitivas.
-- T2 — S2, inline — consola de escritorio: rail, píldoras, tarjeta, dock y hojas laterales.
+- T2 — S2, inline — hecho (`29d8f6e`) — consola de escritorio: rail, píldoras, tarjeta, dock y hojas laterales.
 - T3 — S3, inline — shell móvil: barra inferior, header, banda de sincronización y hojas.
 - T4 — S4, inline — cartografía local y controles propios.
 - T5 — S6, inline — pasada de accesibilidad y contraste medido.
@@ -70,3 +70,29 @@ Runners: `pnpm check`, `pnpm test:e2e`, `pnpm test:integration`.
   en `:root` de `styles.css` y `components/icons.tsx` aporta el set propio de 20 iconos, sin
   dependencia nueva de iconos. Evidencia: `pnpm check` sale 0 (tipos, eslint + depcruise,
   prettier, unitarios y build).
+- L9 — T2 hecho. `App.tsx` (~660 líneas) y `styles.css` (~1100 líneas) reescritos. Al
+  reescribir aparecieron tres defectos reales que la versión nueva había perdido: (1) el
+  aviso solo se renderizaba en la pantalla de login, así que «Parcelas disponibles sin
+  conexión» y «Trabajo sincronizado.» no se veían nunca; (2) la banda de sincronización
+  completa («Preparar trabajo offline», «Sincronizar ahora») había desaparecido, que es el
+  corazón del flujo offline; (3) `ParcelMap` seguía devolviendo su propio `section.panel`
+  con un `h2`, que impedía que el mapa ocupara el escenario. Los tres se corrigieron antes
+  de verificar.
+- L10 — Desvíos respecto del spec, todos por evidencia: (a) el anillo de foco es agave y no
+  lima, porque lima sobre arena mide ~1,5:1 y el spec exige contraste medido; lima queda
+  solo sobre el rail de tinta; (b) la barra inferior móvil tiene 3 destinos (Parcelas ·
+  Mapa · Revisión) y no 4: un destino Perfil duplicaría la identidad del header y un segundo
+  botón «Salir» rompe el modo estricto de Playwright; (c) no hay franja de línea de tiempo
+  en el dock: un chip con el nombre de la parcela rompería `toHaveCount(1)` de «La Ribera ·
+  Demo»; (d) las acciones de sincronización viven dentro del cuerpo del dock colapsable;
+  (e) se agregó el token `--clay-700` porque `--clay-500` no alcanza contraste de texto
+  sobre arena.
+- L11 — Dos fallos de E2E que la reescritura provocó, con su causa: (1) `[mobile]` ocultaba
+  `.ds-user` en el header y el test exige ver «Técnico de demostración» tras entrar; se
+  resolvió ocultando en su lugar el wordmark, la etiqueta de página y el chip de
+  demostración (la divulgación sigue en el encabezado), dejando el nombre con elipsis a
+  96 px; (2) en ambos proyectos, tras recargar sin conexión el borrador quedaba dentro de
+  la sección Revisión, oculta porque el técnico abre en Parcelas; ahora, al reabrir con
+  borradores pendientes, la app abre en Revisión una sola vez por sesión (`useRef`), porque
+  el trabajo sin enviar es lo primero que hay que ver. Evidencia: `pnpm check` 0,
+  `pnpm test:e2e` 8/8 (36,9 s), `pnpm test:integration` 4 archivos / 17 tests.

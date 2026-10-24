@@ -1,4 +1,11 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   Inspection,
@@ -22,6 +29,9 @@ import {
   logoutPending,
   markLogoutPending,
 } from './lib/logout.ts';
+import { Icon } from './components/icons.tsx';
+
+type View = 'parcelas' | 'mapa' | 'inspecciones';
 
 const ParcelMap = lazy(() => import('./components/ParcelMap.tsx'));
 export function App() {
@@ -33,11 +43,17 @@ export function App() {
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<Parcel | null>(null);
   const [createParcel, setCreateParcel] = useState(false);
-  const [map, setMap] = useState(false);
+  const [view, setView] = useState<View>('parcelas');
+  const [active, setActive] = useState<Parcel | null>(null);
+  const [dockOpen, setDockOpen] = useState(true);
   const queryClient = useQueryClient();
   const isCoordinator =
     profile?.memberships.find((m) => m.associationId === associationId)
       ?.role === 'coordinator';
+  // A coordinator opens the review queue; a technician opens their parcels.
+  useEffect(() => {
+    setView(isCoordinator ? 'inspecciones' : 'parcelas');
+  }, [isCoordinator, associationId]);
   const changed = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: ['workspace'] });
   }, [queryClient]);
@@ -106,6 +122,15 @@ export function App() {
         .toArray(),
     }),
   });
+  // Reopening the app with pending work lands on the evidence, not on an empty
+  // list: a technician who reloads in the field must see what still has to be
+  // sent. Runs once per session, so it never fights manual navigation.
+  const opened = useRef(false);
+  useEffect(() => {
+    if (opened.current || !local.data) return;
+    opened.current = true;
+    if (local.data.drafts.length > 0) setView('inspecciones');
+  }, [local.data]);
   const sync = useCallback(async () => {
     if (!associationId || !navigator.onLine) return;
     setBusy(true);
@@ -225,49 +250,104 @@ export function App() {
   );
   const name = (id: string) =>
     parcels.find((p) => p.id === id)?.name ?? 'Parcela de la asociación';
+  const initials = profile.user.name
+    .split(' ')
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('');
+  const activeIndex = active
+    ? parcels.findIndex((parcel) => parcel.id === active.id)
+    : -1;
   return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <a className="brand" href="/">
+    <div className="ds-shell">
+      <aside className="ds-rail">
+        <a className="ds-rail-brand" href="/" aria-label="CHIRA OS">
           <img src="/icon.svg" alt="" />
-          <span>
-            CHIRA <b>OS</b>
-          </span>
         </a>
-        <div className="sidebar-product">
-          GUARDIAN<span>Inteligencia para cuidar.</span>
-        </div>
-        <nav aria-label="Principal">
-          <a href="#parcelas" className="nav-active">
-            ▦ &nbsp; Mis parcelas
+        <nav className="ds-rail-nav" aria-label="Principal">
+          <a
+            className="ds-rail-item"
+            href="#parcelas"
+            title="Mis parcelas"
+            aria-label="Mis parcelas"
+            aria-current={view === 'parcelas' ? 'page' : undefined}
+            onClick={() => setView('parcelas')}
+          >
+            <Icon name="parcels" />
           </a>
-          <a href="#inspecciones">◉ &nbsp; Inspecciones</a>
-          <button className="nav-button" onClick={() => setMap((v) => !v)}>
-            ⌖ &nbsp; {map ? 'Ocultar mapa' : 'Ver ubicaciones'}
-          </button>
+          <a
+            className="ds-rail-item"
+            href="#inspecciones"
+            title="Inspecciones"
+            aria-label="Inspecciones"
+            aria-current={view === 'inspecciones' ? 'page' : undefined}
+            onClick={() => setView('inspecciones')}
+          >
+            <Icon name="inspections" />
+          </a>
+          {isCoordinator && (
+            <a
+              className="ds-rail-item"
+              href="#exportar"
+              title="Exportar"
+              aria-label="Exportar"
+            >
+              <Icon name="export" />
+            </a>
+          )}
         </nav>
-        <div className="sidebar-bottom">
-          <span className="eyebrow">VALLE DEL CHIRA</span>
-          <p>
-            La tecnología al servicio
-            <br />
-            de nuestra tierra.
-          </p>
-          <span>Querecotillo · Perú</span>
+        <div className="ds-rail-bottom">
+          <span className="ds-avatar" aria-hidden="true">
+            {initials}
+          </span>
         </div>
       </aside>
-      <div className="workspace">
-        <header className="topbar">
-          <span>
-            Asociación <span className="muted">/</span> Guardian
-          </span>
-          <div>
-            <span className={`connection ${online ? '' : 'offline'}`}>
+      <div className="ds-main">
+        <header className="ds-topbar">
+          <div className="ds-context">
+            <img className="ds-context-mark" src="/icon.svg" alt="" />
+            <span className="ds-context-name">
+              CHIRA <b>OS</b>
+            </span>
+            <span className="ds-context-sep" aria-hidden="true">
+              /
+            </span>
+            <span className="ds-context-page">Guardian</span>
+          </div>
+          <div className="ds-status">
+            {profile.memberships.length > 1 && (
+              <label className="ds-pill ds-pill--select">
+                <span className="ds-pill-label">Asociación</span>
+                <select
+                  value={associationId}
+                  disabled={busy}
+                  onChange={(event) => {
+                    setSelected(null);
+                    setActive(null);
+                    setAssociationId(event.target.value);
+                  }}
+                >
+                  {profile.memberships.map((membership, index) => (
+                    <option
+                      key={membership.associationId}
+                      value={membership.associationId}
+                    >
+                      Asociación {index + 1}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <span
+              className={`ds-chip ${online ? 'ds-chip--online' : 'ds-chip--offline'}`}
+            >
+              <Icon name={online ? 'online' : 'offline'} size={14} />
               {online ? 'Con conexión' : 'Sin conexión'}
             </span>
-            <span className="user-name">{profile.user.name}</span>
+            <span className="ds-chip ds-chip--warn">Demostración</span>
+            <span className="ds-user">{profile.user.name}</span>
             <button
-              className="text-button"
+              className="ds-btn ds-btn--ghost"
               onClick={() => void logout()}
               disabled={busy}
             >
@@ -275,112 +355,364 @@ export function App() {
             </button>
           </div>
         </header>
-        <main className="content">
-          <div className="page-heading">
-            <div>
-              <span className="eyebrow">
-                CAMPO CONECTADO, INCLUSO SIN SEÑAL
-              </span>
-              <h1>
-                {isCoordinator
-                  ? 'Una mirada a tu asociación.'
-                  : 'Cada visita cuenta.'}
-              </h1>
-              <p>
-                {isCoordinator
-                  ? 'Revisa la evidencia y acompaña las decisiones de tu equipo.'
-                  : 'Registra lo que ves hoy. Protege lo que crece mañana.'}
-              </p>
-            </div>
-            <span className="date">
+        {notice && (
+          <div role="status" className="notice ds-notice">
+            {notice}
+          </div>
+        )}
+        <main className="ds-stage">
+          <div className="ds-map" data-visible={view === 'mapa'}>
+            <Suspense
+              fallback={<p className="ds-map-loading">Cargando mapa…</p>}
+            >
+              <ParcelMap parcels={parcels} />
+            </Suspense>
+            <p className="ds-map-note">
+              Referencia geográfica local. No incluye imágenes satelitales ni
+              cartografía base.
+            </p>
+          </div>
+          <section className="ds-heading" aria-labelledby="ds-title">
+            <span className="ds-eyebrow">
+              CAMPO CONECTADO, INCLUSO SIN SEÑAL
+            </span>
+            <h1 id="ds-title">
+              {isCoordinator
+                ? 'Una mirada a tu asociación.'
+                : 'Cada visita cuenta.'}
+            </h1>
+            <p>
+              {isCoordinator
+                ? 'Revisa la evidencia y acompaña las decisiones de tu equipo.'
+                : 'Registra lo que ves hoy. Protege lo que crece mañana.'}
+            </p>
+            <span className="ds-date">
               {new Date().toLocaleDateString('es-PE', {
                 day: 'numeric',
                 month: 'long',
                 year: 'numeric',
               })}
             </span>
-          </div>
-          <div className="demo-note">
-            DEMOSTRACIÓN · DATOS SINTÉTICOS · SIN DIAGNÓSTICO AUTOMÁTICO
-          </div>
-          {profile.memberships.length > 1 && (
-            <label>
-              Asociación
-              <select
-                value={associationId}
-                disabled={busy}
-                onChange={(e) => {
-                  setSelected(null);
-                  setAssociationId(e.target.value);
+            <span className="ds-demo">
+              Demostración · datos sintéticos · sin diagnóstico automático
+            </span>
+          </section>
+          {active && (
+            <article className="ds-parcel-card">
+              <button
+                className="ds-icon-btn"
+                aria-label="Cerrar"
+                onClick={() => setActive(null)}
+              >
+                <Icon name="close" size={16} />
+              </button>
+              <span className="ds-eyebrow">
+                CHIRA / {String(activeIndex + 1).padStart(2, '0')}
+              </span>
+              <strong className="ds-parcel-name">{active.name}</strong>
+              <p>{active.producerName}</p>
+              <dl className="ds-parcel-facts">
+                <div>
+                  <dt>Superficie</dt>
+                  <dd>{active.hectares} ha</dd>
+                </div>
+                <div>
+                  <dt>Cultivo</dt>
+                  <dd>{active.crop}</dd>
+                </div>
+                <div>
+                  <dt>Ubicación</dt>
+                  <dd>
+                    {active.location.coordinates[1].toFixed(4)},{' '}
+                    {active.location.coordinates[0].toFixed(4)}
+                  </dd>
+                </div>
+              </dl>
+              <button
+                className="ds-btn ds-btn--primary"
+                onClick={() => {
+                  setSelected(active);
+                  setActive(null);
                 }}
               >
-                {profile.memberships.map((m, i) => (
-                  <option key={m.associationId} value={m.associationId}>
-                    Asociación {i + 1}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-          {notice && (
-            <div className="notice" role="status">
-              {notice}
-            </div>
-          )}
-          <div className="stats">
-            <div>
-              <span>PARCELAS EN ESTE EQUIPO</span>
-              <strong>{parcels.length.toString().padStart(2, '0')}</strong>
-              <small>Listas para la próxima visita</small>
-            </div>
-            <div>
-              <span>SUPERFICIE REGISTRADA</span>
-              <strong>
-                {parcels
-                  .reduce((s, p) => s + p.hectares, 0)
-                  .toLocaleString('es-PE')}{' '}
-                <em>ha</em>
-              </strong>
-              <small>Trabajo a escala de cada productor</small>
-            </div>
-            <div>
-              <span>ENVÍOS PENDIENTES</span>
-              <strong>
-                {drafts.length.toString().padStart(2, '0')}{' '}
-                <i className={drafts.length ? 'dot amber' : 'dot'} />
-              </strong>
-              <small>
-                {drafts.length
-                  ? 'Conservados en este dispositivo'
-                  : 'Todo en orden por aquí'}
-              </small>
-            </div>
-          </div>
-          <section className="sync-banner">
-            <div className="sync-symbol" aria-hidden="true">
-              ↻
-            </div>
-            <div>
-              <strong>Tu trabajo sigue, con o sin conexión.</strong>
-              <p>
-                Prepara tus parcelas antes de salir. Los envíos pendientes se
-                reintentan al volver la señal.
-              </p>
-            </div>
-            <div className="actions">
-              <button
-                className="secondary"
-                disabled={!online || busy}
-                onClick={() => void download()}
-              >
-                Preparar trabajo offline
+                Nueva inspección
               </button>
-              <button disabled={!online || busy} onClick={() => void sync()}>
-                {busy ? 'Sincronizando…' : 'Sincronizar ahora'}
-              </button>
+            </article>
+          )}
+          <section className="ds-dock" data-open={dockOpen}>
+            <button
+              className="ds-dock-handle"
+              onClick={() => setDockOpen((value) => !value)}
+              aria-expanded={dockOpen}
+              aria-label={dockOpen ? 'Contraer panel' : 'Expandir panel'}
+            >
+              <Icon name={dockOpen ? 'chevronDown' : 'chevronUp'} size={16} />
+            </button>
+            <div className="ds-dock-body">
+              <div className="ds-sync">
+                <div className="ds-sync-copy">
+                  <strong>Tu trabajo sigue, con o sin conexión.</strong>
+                  <p>
+                    Prepara tus parcelas antes de salir. Los envíos pendientes
+                    se reintentan al volver la señal.
+                  </p>
+                </div>
+                <div className="ds-sync-actions">
+                  <button
+                    className="ds-btn ds-btn--secondary"
+                    disabled={!online || busy}
+                    onClick={() => void download()}
+                  >
+                    Preparar trabajo offline
+                  </button>
+                  <button
+                    className="ds-btn ds-btn--primary"
+                    disabled={!online || busy}
+                    onClick={() => void sync()}
+                  >
+                    {busy ? 'Sincronizando…' : 'Sincronizar ahora'}
+                  </button>
+                </div>
+              </div>
+              <div className="ds-stats">
+                <div>
+                  <span>PARCELAS EN ESTE EQUIPO</span>
+                  <strong>{parcels.length.toString().padStart(2, '0')}</strong>
+                  <small>Listas para la próxima visita</small>
+                </div>
+                <div>
+                  <span>SUPERFICIE REGISTRADA</span>
+                  <strong>
+                    {parcels
+                      .reduce((sum, parcel) => sum + parcel.hectares, 0)
+                      .toLocaleString('es-PE')}{' '}
+                    <em>ha</em>
+                  </strong>
+                  <small>Trabajo a escala de cada productor</small>
+                </div>
+                <div>
+                  <span>ENVÍOS PENDIENTES</span>
+                  <strong>
+                    {drafts.length.toString().padStart(2, '0')}{' '}
+                    <i className={drafts.length ? 'dot amber' : 'dot'} />
+                  </strong>
+                  <small>
+                    {drafts.length
+                      ? 'Conservados en este dispositivo'
+                      : 'Todo en orden por aquí'}
+                  </small>
+                </div>
+              </div>
+              <div className="ds-dock-tabs" role="tablist" aria-label="Panel">
+                <button
+                  type="button"
+                  role="tab"
+                  className="ds-tab"
+                  aria-selected={view === 'parcelas'}
+                  onClick={() => setView('parcelas')}
+                >
+                  Parcelas <span className="ds-count">{parcels.length}</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  className="ds-tab"
+                  aria-selected={view === 'inspecciones'}
+                  onClick={() => setView('inspecciones')}
+                >
+                  Inspecciones{' '}
+                  <span className="ds-count">
+                    {drafts.length + inspections.length}
+                  </span>
+                </button>
+              </div>
+              <div className="ds-dock-scroll">
+                <section id="parcelas" hidden={view !== 'parcelas'}>
+                  <div className="ds-section-head">
+                    <div>
+                      <h2>
+                        Mis parcelas{' '}
+                        <span className="ds-count">{parcels.length}</span>
+                      </h2>
+                      <p className="muted">
+                        Cada parcela, su historia y sus próximas visitas.
+                      </p>
+                    </div>
+                    <button
+                      className="ds-btn ds-btn--secondary"
+                      disabled={!online}
+                      onClick={() => setCreateParcel(true)}
+                    >
+                      Registrar parcela
+                    </button>
+                  </div>
+                  <div className="ds-parcel-grid">
+                    {parcels.map((parcel, index) => (
+                      <article
+                        className="ds-parcel-tile"
+                        key={parcel.id}
+                        data-active={active?.id === parcel.id}
+                      >
+                        <button
+                          type="button"
+                          className="ds-parcel-open"
+                          onClick={() => setActive(parcel)}
+                          aria-label={`Ver ${parcel.name} en el mapa`}
+                        >
+                          <span className="ds-parcel-code">
+                            CHIRA / {String(index + 1).padStart(2, '0')}
+                          </span>
+                          <span className="ds-parcel-crop">{parcel.crop}</span>
+                        </button>
+                        <div className="ds-parcel-info">
+                          <h3>{parcel.name}</h3>
+                          <p>{parcel.producerName}</p>
+                          <div className="ds-parcel-meta">
+                            <span>
+                              <strong>{parcel.hectares} ha</strong>Superficie
+                            </span>
+                            <span>
+                              <strong>Querecotillo</strong>Valle del Chira
+                            </span>
+                          </div>
+                          <button
+                            className="ds-btn ds-btn--secondary ds-btn--block"
+                            onClick={() => setSelected(parcel)}
+                          >
+                            Nueva inspección
+                          </button>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                  {parcels.length === 0 && (
+                    <div className="ds-empty">
+                      Prepara tu trabajo offline para ver las parcelas
+                      asignadas, o registra tu primera parcela.
+                    </div>
+                  )}
+                </section>
+                <section id="inspecciones" hidden={view !== 'inspecciones'}>
+                  <div className="ds-section-head">
+                    <div>
+                      <h2>Registro de campo</h2>
+                      <p className="muted">
+                        Observaciones con evidencia y revisión humana.
+                      </p>
+                    </div>
+                    <span className="small">
+                      {drafts.length + inspections.length} registros
+                    </span>
+                  </div>
+                  <div className="ds-inspection-grid">
+                    {drafts.map((draft) => (
+                      <InspectionCard
+                        key={draft.id}
+                        inspection={
+                          {
+                            ...draft,
+                            photoIds: draft.photos.map((photo) => photo.id),
+                            status: 'draft',
+                            version: Math.max(1, draft.expectedVersion),
+                          } as Inspection
+                        }
+                        draft={draft}
+                        parcelName={name(draft.parcelId)}
+                        associationId={associationId}
+                        isCoordinator={false}
+                        onChanged={changed}
+                      />
+                    ))}
+                    {inspections.map((inspection) => (
+                      <InspectionCard
+                        key={inspection.id}
+                        inspection={inspection}
+                        parcelName={name(inspection.parcelId)}
+                        associationId={associationId}
+                        isCoordinator={!!isCoordinator}
+                        onChanged={() => void reload()}
+                      />
+                    ))}
+                  </div>
+                  {!drafts.length && !inspections.length && (
+                    <div className="ds-empty">
+                      Las próximas visitas aparecerán aquí. Empieza desde una
+                      parcela.
+                    </div>
+                  )}
+                </section>
+                {isCoordinator && (
+                  <section className="ds-export" id="exportar">
+                    <div>
+                      <strong>La información es de tu asociación.</strong>
+                      <p>
+                        Descarga los datos cuando los necesites. Las fotografías
+                        están disponibles en cada inspección.
+                      </p>
+                    </div>
+                    <a
+                      href={`/api/v1/exports/parcels.geojson?associationId=${associationId}`}
+                      download
+                    >
+                      Exportar parcelas
+                    </a>
+                    <a
+                      href={`/api/v1/exports/inspections.csv?associationId=${associationId}`}
+                      download
+                    >
+                      Exportar inspecciones
+                    </a>
+                  </section>
+                )}
+                <footer className="ds-footer">
+                  CHIRA OS{' '}
+                  <span>Guardian · Hecho para el trabajo de campo.</span>
+                  <span>
+                    Las observaciones requieren evaluación agronómica.
+                  </span>
+                </footer>
+              </div>
             </div>
           </section>
-          {selected && (
+        </main>
+        <nav className="ds-tabbar" aria-label="Navegación">
+          <button
+            type="button"
+            className="ds-tabbar-item"
+            aria-current={view === 'parcelas' ? 'page' : undefined}
+            onClick={() => setView('parcelas')}
+          >
+            <Icon name="list" />
+            Parcelas
+          </button>
+          <button
+            type="button"
+            className="ds-tabbar-item"
+            aria-current={view === 'mapa' ? 'page' : undefined}
+            onClick={() => setView('mapa')}
+          >
+            <Icon name="map" />
+            Mapa
+          </button>
+          <button
+            type="button"
+            className="ds-tabbar-item"
+            aria-current={view === 'inspecciones' ? 'page' : undefined}
+            onClick={() => setView('inspecciones')}
+          >
+            <Icon name="inspections" />
+            Revisión
+          </button>
+        </nav>
+      </div>
+      {selected && (
+        <div className="ds-scrim">
+          <div
+            className="ds-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Nueva inspección"
+          >
             <InspectionForm
               parcel={selected}
               userId={profile.user.id}
@@ -389,11 +721,21 @@ export function App() {
               onSaved={() => {
                 setSelected(null);
                 changed();
+                setView('inspecciones');
                 setNotice('Inspección guardada en este dispositivo.');
               }}
             />
-          )}
-          {createParcel && (
+          </div>
+        </div>
+      )}
+      {createParcel && (
+        <div className="ds-scrim">
+          <div
+            className="ds-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Registrar parcela"
+          >
             <ParcelForm
               associationId={associationId}
               onCancel={() => setCreateParcel(false)}
@@ -402,152 +744,9 @@ export function App() {
                 void reload();
               }}
             />
-          )}
-          {map && (
-            <Suspense fallback={<p>Cargando mapa…</p>}>
-              <ParcelMap parcels={parcels} />
-            </Suspense>
-          )}
-          <section id="parcelas">
-            <div className="section-heading">
-              <div>
-                <h2>
-                  Mis parcelas <span className="count">{parcels.length}</span>
-                </h2>
-                <p className="muted">
-                  Cada parcela, su historia y sus próximas visitas.
-                </p>
-              </div>
-              <button
-                className="secondary"
-                disabled={!online}
-                onClick={() => setCreateParcel(true)}
-              >
-                Registrar parcela
-              </button>
-            </div>
-            <div className="parcel-grid">
-              {parcels.map((p, index) => (
-                <article className="panel parcel-card" key={p.id}>
-                  <div className="parcel-illustration" aria-hidden="true">
-                    <span className="parcel-code">
-                      CHIRA / {String(index + 1).padStart(2, '0')}
-                    </span>
-                    <div className="plot">
-                      <i />
-                      <i />
-                      <i />
-                      <i />
-                      <i />
-                      <i />
-                    </div>
-                    <span className="crop-tag">{p.crop}</span>
-                  </div>
-                  <div className="parcel-info">
-                    <h3>{p.name}</h3>
-                    <p>{p.producerName}</p>
-                    <div className="parcel-meta">
-                      <span>
-                        <strong>{p.hectares} ha</strong>Superficie
-                      </span>
-                      <span>
-                        <strong>Querecotillo</strong>Valle del Chira
-                      </span>
-                    </div>
-                    <button
-                      className="secondary full-width"
-                      onClick={() => setSelected(p)}
-                    >
-                      Nueva inspección
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
-            {parcels.length === 0 && (
-              <div className="empty">
-                Prepara tu trabajo offline para ver las parcelas asignadas, o
-                registra tu primera parcela.
-              </div>
-            )}
-          </section>
-          <section id="inspecciones">
-            <div className="section-heading">
-              <div>
-                <h2>Registro de campo</h2>
-                <p className="muted">
-                  Observaciones con evidencia y revisión humana.
-                </p>
-              </div>
-              <span className="small">
-                {drafts.length + inspections.length} registros
-              </span>
-            </div>
-            <div className="inspection-grid">
-              {drafts.map((d) => (
-                <InspectionCard
-                  key={d.id}
-                  inspection={
-                    {
-                      ...d,
-                      photoIds: d.photos.map((p) => p.id),
-                      status: 'draft',
-                      version: Math.max(1, d.expectedVersion),
-                    } as Inspection
-                  }
-                  draft={d}
-                  parcelName={name(d.parcelId)}
-                  associationId={associationId}
-                  isCoordinator={false}
-                  onChanged={changed}
-                />
-              ))}
-              {inspections.map((i) => (
-                <InspectionCard
-                  key={i.id}
-                  inspection={i}
-                  parcelName={name(i.parcelId)}
-                  associationId={associationId}
-                  isCoordinator={!!isCoordinator}
-                  onChanged={() => void reload()}
-                />
-              ))}
-            </div>
-            {!drafts.length && !inspections.length && (
-              <div className="empty">
-                Las próximas visitas aparecerán aquí. Empieza desde una parcela.
-              </div>
-            )}
-          </section>
-          {isCoordinator && (
-            <section className="export-bar">
-              <div>
-                <strong>La información es de tu asociación.</strong>
-                <p>
-                  Descarga los datos cuando los necesites. Las fotografías están
-                  disponibles en cada inspección.
-                </p>
-              </div>
-              <a
-                href={`/api/v1/exports/parcels.geojson?associationId=${associationId}`}
-                download
-              >
-                Exportar parcelas
-              </a>
-              <a
-                href={`/api/v1/exports/inspections.csv?associationId=${associationId}`}
-                download
-              >
-                Exportar inspecciones
-              </a>
-            </section>
-          )}
-          <footer>
-            CHIRA OS <span>Guardian · Hecho para el trabajo de campo.</span>
-            <span>Las observaciones requieren evaluación agronómica.</span>
-          </footer>
-        </main>
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

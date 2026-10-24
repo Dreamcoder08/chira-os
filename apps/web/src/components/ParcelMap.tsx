@@ -16,7 +16,7 @@ export default function ParcelMap({ parcels }: { parcels: Parcel[] }) {
           {
             id: 'background',
             type: 'background',
-            paint: { 'background-color': '#e8eddf' },
+            paint: { 'background-color': '#efebdf' },
           },
         ],
       },
@@ -28,7 +28,7 @@ export default function ParcelMap({ parcels }: { parcels: Parcel[] }) {
     for (const parcel of parcels) {
       const text = document.createElement('span');
       text.textContent = parcel.name;
-      new maplibregl.Marker({ color: '#235c40' })
+      new maplibregl.Marker({ color: '#1f5c43' })
         .setLngLat(parcel.location.coordinates)
         .setPopup(new maplibregl.Popup().setDOMContent(text))
         .addTo(map);
@@ -36,17 +36,10 @@ export default function ParcelMap({ parcels }: { parcels: Parcel[] }) {
     return () => map.remove();
   }, [parcels]);
   return (
-    <section className="panel">
-      <h2>Ubicación de parcelas</h2>
-      <p className="small">
-        Referencia geográfica local. No incluye imágenes satelitales ni
-        cartografía base.
-      </p>
-      <div
-        className="map"
-        ref={container}
-        aria-label="Mapa de ubicación de parcelas"
-      />
-    </section>
+    <div
+      className="ds-map-canvas"
+      ref={container}
+      aria-label="Mapa de ubicación de parcelas"
+    />
   );
 }
