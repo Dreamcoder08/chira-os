@@ -33,3 +33,19 @@ Plan: docs/superpowers/plans/2026-10-23-guardian.md
 - Publication: GitHub CLI, Docker Hub and npm began returning HTTP 503 across all outbound
   requests after local verification. Connector read access still works; no connector capability
   for repository creation is available. Preserve local source and report publication truthfully.
+
+## 2026-10-24 — Pilot gates
+
+- Publication confirmed done: private `Dreamcoder08/chira-os`, `main` in sync, five Dependabot
+  branches open. The earlier 503 block is closed by observation, not by assumption.
+- Database image: every official PostGIS variant carried HIGH/CRITICAL findings (Debian 107,
+  alpine 1) plus 26 in `gosu`. The project now builds `chira-os-db:local` from `Dockerfile.db`
+  (alpine base pinned by digest, `gosu` replaced by `su-exec` through a wrapper entrypoint,
+  `apk upgrade` applied). `pnpm security:database` reports 0 findings with no exclusions.
+- Validation on the built image: migrate, seed, integration 9/9, E2E 4/4, backup and restore
+  verified, `pnpm check` clean.
+- Locale: the alpine base has no glibc locales. The database is initialised with ICU `es-PE`;
+  the previous Debian-initialised volume was dumped to `.local/backups/` and re-initialised
+  instead of being reused with a mismatched recorded collation.
+- Branch protection on `main` remains BLOCKED by the GitHub plan: both classic protection and
+  rulesets return 403 for private repositories on GitHub Free. Requires a human decision.

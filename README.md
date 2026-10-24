@@ -25,6 +25,13 @@ pnpm dev
 Abre **http://localhost:5173**. Usa `localhost`, no una IP de red: el origen forma parte
 del control de sesiones. El backend de desarrollo escucha solo en `127.0.0.1:3001`.
 
+`docker compose up` construye la base de datos desde `Dockerfile.db`: una PostGIS 17/3.6 alpine
+fijada por digest, sin `gosu` y con los paquetes del sistema al día. La primera vez tarda un poco
+más porque compila la imagen. La base se inicializa con colación ICU `es-PE`; si vienes de un
+volumen creado por la imagen Debian anterior, no lo reutilices: respáldalo con
+`pnpm backup .local/backups/antes-de-alpine` y recrea el volumen con
+`docker compose down db && docker volume rm chira-os_postgres && docker compose up -d --wait db`.
+
 El seed crea `tecnico@chira.test`, `coordinador@chira.test` y un usuario de otra asociación.
 La contraseña aleatoria se guarda únicamente en **`.local/demo-credentials.json`**, con
 permisos restringidos. Ábrelo localmente; no lo pegues en incidencias, capturas ni commits.
@@ -133,12 +140,11 @@ pnpm security:database
 El análisis de imagen también incluye bibliotecas del sistema y paquetes presentes en ella;
 no equivale a `pnpm audit`.
 
-**Verificación pendiente en este entorno:** la imagen inicial PostGIS 17/3.5 arrastraba
-Debian 11 y fue descartada tras su análisis. Compose fija ahora PostGIS 17/3.6 por el digest
-obtenido del registro. La descarga final fue interrumpida por HTTP 503; las pruebas de esta
-sesión se ejecutaron con la imagen inicial y no acreditan todavía la imagen sustituta.
-Antes de usar el piloto, ejecutar desde un entorno con red `docker compose up -d --wait db`,
-`pnpm db:migrate`, las suites y `pnpm security:database`. CI lo exige y no omite CVE.
+**Estado del análisis de base de datos:** ninguna imagen oficial de PostGIS llegaba a cero
+hallazgos HIGH/CRITICAL, así que el proyecto construye la suya desde `Dockerfile.db` y
+`pnpm security:database` la analiza sin exclusiones. Resultado observado: 0 hallazgos. Las
+pruebas de integración, E2E y copia/restauración se ejecutaron sobre esa imagen. El pendiente
+real hoy es la protección de `main`: GitHub Free no la permite en repositorios privados.
 
 ## Copias y recuperación
 

@@ -1,0 +1,23 @@
+# Database image for CHIRA OS.
+#
+# The official PostGIS alpine image is kept as the base (digest-pinned). Two supply-chain gaps are
+# closed here instead of excluded from the scan:
+#   1. `gosu` ships as a static Go binary compiled with an outdated toolchain and carries 26
+#      HIGH/CRITICAL findings with no upstream fix. It is removed; the wrapper entrypoint drops
+#      privileges with `su-exec` (Alpine package) and then delegates to the official entrypoint.
+#   2. Alpine packages lag their fixed versions. `apk upgrade` applies the available fixes.
+# No CVE is ignored: the scanner keeps the same severity threshold as the rest of the repository.
+
+FROM postgis/postgis:17-3.6-alpine@sha256:cd7b00a457793cabd269af2af292a994754d130ac1e564ae1c053abb22b947cf
+
+RUN apk add --no-cache su-exec \
+ && apk upgrade --no-cache \
+ && rm -f /usr/local/bin/gosu \
+ && rm -rf /var/cache/apk/*
+
+COPY docker/db-entrypoint.sh /usr/local/bin/chira-db-entrypoint.sh
+
+RUN chmod 0755 /usr/local/bin/chira-db-entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/chira-db-entrypoint.sh"]
+CMD ["postgres"]

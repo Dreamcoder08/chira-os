@@ -1,10 +1,16 @@
 name: chira-os
 services:
   db:
-    image: postgis/postgis:17-3.6@sha256:5cf98659a260df8b9a5123ea9a9150e317c34d8669045f0f937941c6dadb1f64
+    image: chira-os-db:local
+    build:
+      context: .
+      dockerfile: Dockerfile.db
     environment:
       POSTGRES_DB: chira
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run pnpm exec tsx scripts/setup-local.ts}
+      # Alpine/musl has no glibc locales. ICU keeps Spanish ordering deterministic and
+      # independent of the host libc, instead of silently falling back to C collation.
+      POSTGRES_INITDB_ARGS: '--locale-provider=icu --icu-locale=es-PE --locale=C.UTF-8'
     ports:
       - '127.0.0.1:5432:5432'
     volumes:

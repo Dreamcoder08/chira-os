@@ -6,3 +6,4 @@ packages/contracts/src/api.d.ts
 docs/architecture/generated
 playwright-report
 test-results
+.atl

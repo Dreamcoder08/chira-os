@@ -62,10 +62,19 @@ Debian 13 no root, fijado por digest; build conserva herramientas fuera del runt
 No se excluyeron CVE para obtener un resultado verde. Cada cambio de imagen exige reanalizarla.
 
 El escaneo de la imagen inicial de PostGIS 17/3.5 también detectó componentes antiguos de
-Debian 11. Se sustituyó el pin por PostGIS 17/3.6 usando el digest verificado en Docker Hub.
-Una caída de conectividad HTTP 503 impidió terminar su descarga y análisis en esta sesión;
-queda explícitamente pendiente y se exige como gate de CI antes del piloto. No se puede
-inferir un resultado limpio solo porque la etiqueta sea más reciente.
+Debian 11. Se sustituyó el pin por PostGIS 17/3.6 con el digest verificado en Docker Hub, pero
+ninguna variante oficial llega a cero hallazgos: la Debian acumula 107 HIGH/CRITICAL y la alpine
+1 HIGH, y ambas arrastran 26 hallazgos HIGH/CRITICAL en `gosu`, un binario Go compilado con una
+herramienta obsoleta. Reconstruirlo falla porque su código importa `opencontainers/runc`, que no
+forma parte de su módulo.
+
+Por eso el proyecto construye su propia imagen de base (`Dockerfile.db`) desde
+`postgis/postgis:17-3.6-alpine` fijada por digest: elimina `gosu` y baja privilegios con
+`su-exec` desde un entrypoint envoltorio, y aplica `apk upgrade` para cerrar paquetes atrasados.
+Sigue sin excluirse ningún CVE; el gate es el mismo escaneo con severidad HIGH/CRITICAL. Alpine
+usa musl y no trae locales glibc, así que la base se inicializa con proveedor ICU `es-PE`: el
+orden de textos no depende de la libc del host y un volumen previo no se reutiliza en silencio
+(se re-inicializa o se migra con dump/restore).
 
 Las versiones npm se fijan en lockfile y se aplica espera de 72 horas a nuevas publicaciones,
 con excepciones explícitas para parches de seguridad revisados. Esto reduce exposición a
