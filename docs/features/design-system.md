@@ -39,8 +39,8 @@ Runners: `pnpm check`, `pnpm test:e2e`, `pnpm test:integration`.
 
 ## Tasks
 
-- T1 — S1, inline — hecho (`ea30cd5`) — fundaciones: tokens, fuente, iconos y primitivas.
-- T2 — S2, inline — hecho (`29d8f6e`) — consola de escritorio: rail, píldoras, tarjeta, dock y hojas laterales.
+- T1 — S1, inline — hecho (`e262487`) — fundaciones: tokens, fuente, iconos y primitivas.
+- T2 — S2, inline — hecho (`8c783e9`) — consola de escritorio: rail, píldoras, tarjeta, dock y hojas laterales.
 - T3 — S3, inline — shell móvil: barra inferior, header, banda de sincronización y hojas.
 - T4 — S4, inline — cartografía local y controles propios.
 - T5 — S6, inline — pasada de accesibilidad y contraste medido.
