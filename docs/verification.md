@@ -83,7 +83,34 @@ propia imagen desde `Dockerfile.db`, derivada de `postgis/postgis:17-3.6-alpine`
   `allow_force_pushes: false`, `allow_deletions: false`, `enforce_admins: false`. Sin revisión
   de PR obligatoria porque el trabajo es individual.
 
+## Piloto de campo (24 de octubre)
+
+- El perfil `pilot` de `compose.yaml` añade un proxy Caddy fijado por digest
+  (`caddy:2.10-alpine@sha256:4c6e91c6…`) que sirve `apps/web/dist` por HTTPS y enruta `/api` y
+  `/health` a la API, que sigue escuchando solo en `127.0.0.1:3001`. El stack por defecto no cambia:
+  `docker compose config --images` sigue devolviendo solo `chira-os-db:local`.
+- `PILOT_HOST=192.168.1.17 pnpm pilot:check` sale 0 con las siete comprobaciones en verde: emisor
+  `CN=Caddy Local Authority - ECC Intermediate`, `/` 200 `text/html`, `/manifest.webmanifest` 200 con
+  `start_url=/`, `/sw.js` 200 con `cache-control=no-cache`, `/api/v1/session` 401 sin cookie,
+  contexto seguro en Chromium y service worker controlando la página.
+- La cadena del certificado servido verifica contra la CA exportada a `.local/pki/root.crt`:
+  `openssl s_client -CAfile` devuelve `Verification: OK` y `Verify return code: 0 (ok)`; el
+  certificado incluye `IP Address:192.168.1.17` en el SAN.
+- Hallazgo que condiciona el runbook: sin la CA instalada, Chromium no registra el service worker
+  (`SecurityError … An SSL certificate error occurred when fetching the script`), así que la captura
+  sin conexión no existe. Instalar la CA es requisito, no comodidad.
+- `pnpm user:create` creó una cuenta real y esa cuenta inició sesión por
+  `https://192.168.1.17:8443/api/auth/sign-in/email` con 200; la cuenta de verificación se borró
+  después. Pruebas: unitarias 4/4, integración 3/3 contra PostgreSQL real (rol y asociación
+  correctos, correo duplicado y asociación inexistente rechazados), `pnpm check` 0 con 22 pruebas,
+  E2E 4/4.
+- El run de CI `40118873452` del commit `d5aa103` termina en `success` con el job `guardian`
+  completo, incluidas `pnpm security:image`, `pnpm security:database` y la copia de seguridad con
+  `pnpm restore:check`.
+
 El repositorio `Dreamcoder08/chira-os` está publicado y sincronizado. El análisis de la imagen de
 base de datos dejó de ser un pendiente: se cierra con la imagen propia, no con una exclusión. Los
-pendientes abiertos son la validación operativa con usuarios reales, el adaptador S3 y el chunk
-de MapLibre; no se debe habilitar un piloto con datos reales mientras sigan abiertos.
+pendientes abiertos son la validación operativa con usuarios reales (el piloto está preparado y
+documentado, pero ningún técnico ni asociación lo ha usado todavía), el adaptador S3 y el chunk de
+MapLibre. El piloto de campo se hace con datos sintéticos: no se deben cargar datos reales de
+productores sin un acuerdo de tratamiento.

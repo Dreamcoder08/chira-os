@@ -111,6 +111,10 @@ pnpm user:create --email coordinacion@chira.test --name "Nombre real" \
   --role coordinator --association "Asociación Chira · Demo"
 ```
 
+Si la asociación todavía no tiene parcelas, cualquier usuario con sesión puede crearlas desde la
+propia interfaz (formulario de parcela); la parcela queda asignada a quien la crea y el alta se
+registra en la auditoría como `parcel.created`.
+
 El comando imprime la contraseña generada una sola vez. No la guarda en ningún
 archivo: hay que entregarla en el momento y no se puede recuperar después. El
 comando solo funciona contra la base local del piloto.

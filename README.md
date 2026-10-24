@@ -40,6 +40,25 @@ El seed es idempotente y está bloqueado fuera de bases locales de desarrollo.
 En otra terminal, ejecuta `pnpm worker` para procesar seguimientos internos. El worker
 no manda correo ni mensajes externos. No necesita las credenciales de autenticación.
 
+## Piloto de campo en teléfonos
+
+Para probar el flujo offline en un teléfono real hay un perfil `pilot` que sirve el sitio
+compilado por HTTPS en la red local, con una autoridad certificadora propia, y deja la API
+escuchando solo en `127.0.0.1:3001`:
+
+```bash
+pnpm build
+APP_ORIGIN=https://<IP-LOCAL>:8443 pnpm start
+PILOT_HOST=<IP-LOCAL> docker compose --profile pilot up -d proxy
+PILOT_HOST=<IP-LOCAL> pnpm pilot:check
+```
+
+Las cuentas del piloto se crean desde la terminal con `pnpm user:create`; no hay autorregistro.
+El teléfono necesita el certificado de la autoridad local instalado, porque sin él el navegador
+no registra el service worker y no existe captura sin conexión. El procedimiento completo, el
+guion de la demostración y lo que el piloto **no** cubre están en
+[`docs/pilot/field-demo.md`](docs/pilot/field-demo.md).
+
 ## Probar el flujo
 
 1. Entra como técnico y pulsa **Preparar trabajo offline** para descargar tus parcelas.

@@ -61,7 +61,7 @@ ni PR sin decisión humana. Runner: `pnpm check`, `pnpm test:integration`, `pnpm
   checkouts preexistentes y se verifica después del `checkout`; prueba
   `tests/unit/git-checkout.test.ts` (2 casos) en verde. `pnpm diagrams:setup` sobre un clon
   borrado sale 0 en `25cf3708…` y `pnpm diagrams:build` pasa las cuatro compuertas.
-- **T8** (S7) inline — hecho. Actualizaciones aplicadas a mano (ver L12)
+- **T8** (S7) inline — hecho (commit `61ae989`). Actualizaciones aplicadas a mano (ver L12)
   porque los runs de Dependabot no arrancan en esta cuenta (L11). Verificación posterior al
   cambio de versiones: `pnpm check` 0 (18 pruebas), `pnpm security:deps` 0, `pnpm security:scan`
   0, `pnpm test:integration` 9/9 y `pnpm test:e2e` 4/4.
@@ -143,3 +143,9 @@ ni PR sin decisión humana. Runner: `pnpm check`, `pnpm test:integration`, `pnpm
   antepone `--no-sandbox`); comprobado invocando la función con y sin la variable. Se activa solo
   en ese paso del workflow, con el motivo escrito al lado, porque inspecciona HTML generado por
   este repositorio en un runner efímero. La prueba real es el siguiente run.
+- **L16** — S7 se cierra con evidencia: el run de CI `40118873452` (workflow `CI`, commit `d5aa103`)
+  termina en `success` con el job `guardian` completo, incluidos `pnpm security:image`,
+  `pnpm security:database`, la copia de seguridad con `pnpm restore:check` y la validación de
+  diagramas. La compuerta del diagrama ya no necesita nada más, y el análisis de la imagen completa
+  de la aplicación, que en local no se puede construir por falta de buildx, pasó donde corresponde:
+  en CI. El check requerido `guardian` queda verde en `main`.

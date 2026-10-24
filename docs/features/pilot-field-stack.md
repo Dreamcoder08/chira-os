@@ -83,3 +83,7 @@ error occurred when fetching the script`. Chromium no registra un service worker
   Android e iOS, alta de cuentas, `pnpm pilot:check`, el guion de diez pasos con las etiquetas
   reales de la interfaz, los problemas comunes y el cierre. Declara explícitamente lo que la
   demostración no prueba.
+- **L9** — «Alta de usuarios y parcelas» del pedido: las parcelas ya se crean desde la interfaz
+  (`ParcelForm` → `POST /api/v1/parcels`, con auditoría `parcel.created` y asignación a quien la
+  crea), así que no hizo falta código nuevo; el runbook lo menciona como paso previo si la
+  asociación no tiene parcelas. Lo único que faltaba era el alta de cuentas, que es T3.
