@@ -96,6 +96,34 @@ propia imagen desde `Dockerfile.db`, derivada de `postgis/postgis:17-3.6-alpine`
   con 17 tests. Capturas revisadas en 1440×900, 834×1112 y 390×844; los únicos
   errores de consola son tres 401 de la sonda de sesión previa al login.
 
+## Fotografías de campo (24 de octubre)
+
+- Defecto encontrado en el camino de la evidencia, no en el del tamaño del bundle: el formulario
+  validaba tamaño (8 MB) y MIME, pero no píxeles. Un teléfono de 48 MP escribe un JPEG de
+  8064×6048; la API construye `sharp` con `limitInputPixels: 20_000_000`, así que ese archivo se
+  rechaza como `INVALID_IMAGE` y el borrador pasa a `blocked`. Reproducido sin navegador:
+  `sharp(8064×6048, { limitInputPixels: 20_000_000 }).metadata()` responde
+  `Input image exceeds pixel limit`.
+- Segundo defecto, encontrado al medir el primero: una foto real de 48 MP pesa **15,19 MB**, así
+  que el chequeo de 8 MB del cliente rechazaba el archivo antes de que existiera la oportunidad de
+  reducirlo. El límite de 8 MB es del envío, no de la cámara.
+- Corrección: `preparePhoto` decodifica con orientación EXIF aplicada, reduce por `fitWithin` a un
+  lado mayor de 2048 px sin ampliar nunca, y codifica WebP q0.92 con respaldo JPEG. Una imagen que
+  ya cabe se guarda intacta. La guarda de entrada es de 40 MB y solo evita decodificaciones
+  absurdas.
+- Efecto medido sobre imágenes sintéticas con ruido realista: 15,19 MB → 193 KB en el dispositivo
+  y 44 KB tras el reencode del servidor; 10,18 MB → 2 MB, que es el peor caso de ruido puro. La
+  evidencia servida sigue siendo WebP de 2048 px: el cliente agrega una generación de compresión
+  (q0.92) antes de la del servidor (q82), que no se oculta.
+- Comprobado: `pnpm check` sale 0 (34 tests unitarios), `pnpm test:e2e` sale 0 con 10/10 en
+  `desktop` y `mobile` (57,0 s), `pnpm test:integration` sale 0 con 17 tests. La prueba E2E sube
+  48 MP de píxeles y 12 MP de ruido de más de 8 MB en el mismo borrador, lee los blobs desde
+  IndexedDB y afirma 2048 px, WebP y por debajo del límite; con `preparePhoto` devolviendo el
+  archivo intacto falla en los dos proyectos.
+- Sin verificación independiente: el agente `gentle-ai-verify` falla con
+  `Upstream request failed: Go requires a credential` y `general` devuelve
+  `Permission denied: subagent`. No se le atribuye un PASS que no ocurrió.
+
 ## Pendiente, sin atribuirle un resultado verde
 
 - S3 implementado como adaptador opcional, sin pruebas contra un proveedor real ni despliegue.

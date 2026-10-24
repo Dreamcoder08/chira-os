@@ -39,7 +39,8 @@ quedar bloqueada por el límite de píxeles de la API. Rama `main`, entrega por 
   accepts»: sube un JPEG real de 8064×6048, guarda el borrador y lee el blob desde IndexedDB.
   Afirma 2048×1536, `image/webp`, menos de 20 M de píxeles y menos bytes que el original. RED
   observado con `preparePhoto` devolviendo el archivo intacto: 2 fallos (escritorio y móvil).
-- **T4** (S5, S6) inline — verificación y documentación.
+- **T4** (S5, S6) inline — hecho (`pendiente`) — verificación completa y registro en
+  `docs/verification.md` y `README.md`.
 
 ## Log
 

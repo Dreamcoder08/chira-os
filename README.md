@@ -40,6 +40,14 @@ El seed es idempotente y está bloqueado fuera de bases locales de desarrollo.
 En otra terminal, ejecuta `pnpm worker` para procesar seguimientos internos. El worker
 no manda correo ni mensajes externos. No necesita las credenciales de autenticación.
 
+## Fotografías
+
+Una foto se reduce en el teléfono antes de guardarse: lado mayor de 2048 px, WebP de calidad 0.92,
+sin ampliar nunca una imagen más chica. La cámara de un teléfono de 48 MP escribe archivos de unos
+15 MB que la API rechazaría por límite de píxeles; el envío queda en unos cientos de kilobytes y el
+servidor sigue guardando WebP de 2048 px. El detalle y las mediciones están en
+`docs/verification.md`.
+
 ## Interfaz
 
 El escritorio es una consola con el mapa al centro: rail de iconos, tarjeta de
