@@ -144,7 +144,8 @@ no equivale a `pnpm audit`.
 hallazgos HIGH/CRITICAL, así que el proyecto construye la suya desde `Dockerfile.db` y
 `pnpm security:database` la analiza sin exclusiones. Resultado observado: 0 hallazgos. Las
 pruebas de integración, E2E y copia/restauración se ejecutaron sobre esa imagen. El pendiente
-real hoy es la protección de `main`: GitHub Free no la permite en repositorios privados.
+real hoy es la validación operativa con usuarios: el repositorio ya es público y `main` exige el
+check `guardian`.
 
 ## Copias y recuperación
 
@@ -179,4 +180,5 @@ Trade, satélites, sensores, notificaciones externas y despliegue. La revisión 
 debe acordar responsable operativo, dispositivos, identidad reforzada, recuperación,
 protección de datos personales y proveedor de infraestructura.
 
-Repositorio privado. No se concede una licencia de código abierto en esta etapa.
+Repositorio público. No se concede una licencia de código abierto en esta etapa: el código se
+puede leer, pero no reutilizar ni redistribuir sin permiso.

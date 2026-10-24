@@ -13,4 +13,4 @@ Las actualizaciones de dependencias requieren revisión de avisos y pnpm securit
 No mezcles una corrección de seguridad con refactorizaciones ajenas.
 
 Los commits se escriben en inglés con Conventional Commits. Interfaz y documentación
-para operadores en español. No hay licencia de código abierto concedida en esta etapa privada.
+para operadores en español. No hay licencia de código abierto concedida en esta etapa.

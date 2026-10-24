@@ -43,16 +43,20 @@ propia imagen desde `Dockerfile.db`, derivada de `postgis/postgis:17-3.6-alpine`
 
 ## Pendiente, sin atribuirle un resultado verde
 
-- Protección efectiva de `main`: GitHub Free no permite protección de rama ni rulesets en
-  repositorios privados. `PUT /branches/main/protection` y `POST /repos/…/rulesets` devuelven
-  403 "Upgrade to GitHub Pro or make this repository public to enable this feature". El token sí
-  tiene scopes `repo` y `admin:*`, así que es una limitación de plan, no de permisos. Requiere
-  decisión humana: plan Pro, repositorio público o aceptar CI no bloqueante.
 - S3 implementado como adaptador opcional, sin pruebas contra un proveedor real ni despliegue.
 - Chunk opcional de MapLibre: 1.07 MB sin comprimir (292 KB gzip); optimización pendiente antes
   de expansión.
 
-El repositorio privado `Dreamcoder08/chira-os` ya está publicado y sincronizado. El análisis de la
-imagen de base de datos dejó de ser un pendiente: se cierra con la imagen propia, no con una
-exclusión. No se debe habilitar un piloto con datos reales mientras los pendientes abiertos no
-estén cerrados.
+## Protección de `main` (24 de octubre)
+
+- Repositorio público por decisión del usuario (`visibility: public`, `private: false`), después
+  de comprobar que el historial no contiene `.env`, credenciales ni claves y de que
+  `pnpm security:scan` sale 0 sin hallazgos ni secretos.
+- Protección aplicada y leída por API: check requerido `guardian` con `strict: true`,
+  `allow_force_pushes: false`, `allow_deletions: false`, `enforce_admins: false`. Sin revisión
+  de PR obligatoria porque el trabajo es individual.
+
+El repositorio `Dreamcoder08/chira-os` está publicado y sincronizado. El análisis de la imagen de
+base de datos dejó de ser un pendiente: se cierra con la imagen propia, no con una exclusión. Los
+pendientes abiertos son la validación operativa con usuarios reales, el adaptador S3 y el chunk
+de MapLibre; no se debe habilitar un piloto con datos reales mientras sigan abiertos.

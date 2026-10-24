@@ -19,7 +19,9 @@ ni PR sin decisión humana. Runner: `pnpm check`, `pnpm test:integration`, `pnpm
   sin exclusiones de CVE. Un fallo de red o del escáner queda registrado como pendiente, nunca
   como resultado verde.
 - **S4** — `main` debe tener protección con los checks de CI requeridos, configurada y comprobada
-  por lectura de la API de GitHub, no supuesta por la existencia de workflows.
+  por lectura de la API de GitHub, no supuesta por la existencia de workflows. El repositorio
+  pasa a público por decisión del usuario (L9), porque GitHub Free no ofrece protección en
+  repositorios privados.
 - **S5** — `docs/verification.md`, `README.md` y `docs/architecture/decisions.md` (ADR 006) deben
   reflejar solo evidencia observada en esta sesión; se elimina toda afirmación de pendiente que
   ya esté cerrada y se conserva la que siga abierta.
@@ -39,9 +41,10 @@ ni PR sin decisión humana. Runner: `pnpm check`, `pnpm test:integration`, `pnpm
   `pnpm restore:check` = `restored-and-verified` (2 parcelas, 3 inspecciones, 2 fotos).
 - **T3** (S3) inline — hecho. `pnpm security:database` sale 0 con 0 hallazgos en la imagen
   propia. Sin exclusiones ni cambios de severidad.
-- **T4** (S4) inline — bloqueado por plan: GitHub Free no permite protección de rama ni rulesets
-  en repositorios privados (HTTP 403, "Upgrade to GitHub Pro or make this repository public").
-  Requiere decisión humana; ver L6.
+- **T4** (S4) inline — hecho. Repositorio público (`visibility: public`, `private: false`) y
+  protección de `main` leída por API: `contexts: ["guardian"]`, `strict: true`,
+  `force_push: false`, `deletions: false`, `enforce_admins: false`, sin revisión de PR
+  obligatoria (trabajo individual).
 - **T5** (S5) inline — hecho. `README.md`, `docs/verification.md`, ADR 006 y
   `docs/implementation-log.md` actualizados con la evidencia observada.
 - **T6** (S6) inline — hecho. `POSTGRES_INITDB_ARGS` con ICU `es-PE`; volumen previo respaldado
@@ -70,10 +73,9 @@ ni PR sin decisión humana. Runner: `pnpm check`, `pnpm test:integration`, `pnpm
   `setup-user.go` importa `github.com/opencontainers/runc/libcontainer`, que no está en el
   módulo. Se optó por eliminarlo y usar `su-exec`.
 - **L6** — Protección de `main` (S4): `PUT /branches/main/protection` y
-  `POST /repos/…/rulesets` devuelven 403 con "Upgrade to GitHub Pro or make this repository
-  public to enable this feature". No es un problema de permisos del token (scopes `repo` y
-  `admin:*` presentes) sino del plan. Queda como decisión abierta: plan Pro, repositorio público
-  o aceptar CI no bloqueante.
+  `POST /repos/…/rulesets` devolvieron 403 con "Upgrade to GitHub Pro or make this repository
+  public to enable this feature". No era un problema de permisos del token (scopes `repo` y
+  `admin:*` presentes) sino del plan. Se elevó la decisión al usuario.
 - **L7** — Riesgo detectado y cerrado en T6: el volumen local había sido inicializado por la
   imagen Debian (glibc `en_US.utf8`); al arrancar la imagen alpine, PostgreSQL avisó "database
   chira has no actual collation version, but a version was recorded". Reutilizarlo habría dejado
@@ -82,3 +84,10 @@ ni PR sin decisión humana. Runner: `pnpm check`, `pnpm test:integration`, `pnpm
 - **L8** — `pnpm check` fallaba por `.atl/skill-registry.md` (artefacto local del arnés, sin
   formato Prettier). Se añadió `.atl` a `.prettierignore` y `.atl/` a `.gitignore`; `pnpm check`
   vuelve a salir 0.
+- **L9** — Decisión del usuario, textual: «Hacer público el repositorio». Se cambió la
+  visibilidad con `gh repo edit --visibility public --accept-visibility-change-consequences`
+  (`private: false`, `visibility: public`) y después se aplicó la protección. Antes del cambio se
+  verificó que el historial no contiene `.env`, credenciales ni claves: el único archivo
+  coincidente es `.env.example`, y `pnpm security:scan` (fs) salió 0 sin hallazgos ni secretos.
+  Se ajustaron README y CONTRIBUTING: el código es legible pero sigue sin licencia de código
+  abierto.
