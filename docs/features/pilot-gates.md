@@ -30,6 +30,11 @@ ni PR sin decisión humana. Runner: `pnpm check`, `pnpm test:integration`, `pnpm
   sea determinista, y un volumen previo se re-inicializa o se migra con dump/restore. Evidencia:
   `pg_database.datlocprovider = 'i'`, `datlocale = 'es-PE'` y comparación `'Ávila' < 'Zamora'`
   verdadera.
+- **S7** — El pipeline de CI debe salir verde en `main` con el check `guardian` requerido. Un
+  defecto del propio pipeline (setup que falla en un clon nuevo) se corrige con prueba de
+  regresión, y las actualizaciones de dependencias pendientes se aplican a mano respetando la
+  espera de 72 h de ADR 006 y el fijado de acciones por SHA; un run de CI que no arranca por
+  facturación se registra como limitación, nunca como éxito.
 
 ## Tasks
 
@@ -50,6 +55,16 @@ ni PR sin decisión humana. Runner: `pnpm check`, `pnpm test:integration`, `pnpm
 - **T6** (S6) inline — hecho. `POSTGRES_INITDB_ARGS` con ICU `es-PE`; volumen previo respaldado
   en `.local/backups/pre-alpine-20261024-1209.sql` y re-inicializado; sin advertencia de
   colación.
+- **T7** (S7) inline — hecho (commit `e1b682c`). `scripts/archify-setup.ts` fallaba en un clon
+  nuevo: un clon `--no-checkout` tiene el índice vacío y `git status --porcelain` reporta cada
+  archivo como borrado. Se extrajo `scripts/lib/git-checkout.ts`, se comprueba limpieza solo en
+  checkouts preexistentes y se verifica después del `checkout`; prueba
+  `tests/unit/git-checkout.test.ts` (2 casos) en verde. `pnpm diagrams:setup` sobre un clon
+  borrado sale 0 en `25cf3708…` y `pnpm diagrams:build` pasa las cuatro compuertas.
+- **T8** (S7) inline — hecho. Actualizaciones aplicadas a mano (ver L12)
+  porque los runs de Dependabot no arrancan en esta cuenta (L11). Verificación posterior al
+  cambio de versiones: `pnpm check` 0 (18 pruebas), `pnpm security:deps` 0, `pnpm security:scan`
+  0, `pnpm test:integration` 9/9 y `pnpm test:e2e` 4/4.
 
 ## Log
 
@@ -91,3 +106,31 @@ ni PR sin decisión humana. Runner: `pnpm check`, `pnpm test:integration`, `pnpm
   coincidente es `.env.example`, y `pnpm security:scan` (fs) salió 0 sin hallazgos ni secretos.
   Se ajustaron README y CONTRIBUTING: el código es legible pero sigue sin licencia de código
   abierto.
+- **L10** — Evidencia del primer run de CI en `main` (`40115531595`, commit `8438846`): falla en
+  `pnpm diagrams:setup` con «Archify checkout has local changes». Reproducido sin red con un
+  clon local `git clone --no-checkout`: `git status --porcelain` devuelve 101 líneas `D`
+  (índice vacío). El defecto es del script, no del cambio.
+- **L11** — Los runs disparados por Dependabot no arrancan: anotación «The job was not started
+  because recent account payments have failed or your spending limit needs to be increased»
+  (runs `40113844419` y `40113762816`, sin steps ni runner). Los runs disparados por el dueño sí
+  obtienen runner, así que los 5 PR de Dependabot quedan con `guardian` en rojo permanente.
+- **L12** — Actualizaciones aplicadas a mano dentro de la política: `vite` 8.3.5 (publicado
+  2026-10-21T06:38Z, más de 72 h), `dexie` 4.4.7 (2026-10-19), `@aws-sdk/client-s3` 3.1154.0
+  (2026-10-20). No se adopta `pnpm/action-setup` v5.0.0: es un salto mayor de acción y la
+  política exige SHA revisado. El digest de distroless `cb606325…` no tiene fecha de publicación
+  (imagen reproducible, `Created` = epoch), así que la espera de 72 h no es verificable: se
+  registra la limitación y se reanaliza en CI.
+- **L13** — La imagen de aplicación no se pudo reconstruir localmente: `docker build` responde
+  «BuildKit is enabled but the buildx component is missing or broken» y el
+  `--mount=type=secret` del Dockerfile exige BuildKit. `pnpm security:image` queda a cargo del
+  run de CI; no se declara verificado en local.
+- **L14** — Verificación de T7 y T8 en local: `pnpm check` sale 0 (typecheck, eslint +
+  depcruise 50 módulos/92 dependencias, Prettier, 4 archivos con 18 pruebas, build de Vite);
+  `pnpm security:deps` sale 0 («No known vulnerabilities found»); `pnpm security:scan` sale 0
+  sin vulnerabilidades ni secretos; `pnpm test:integration` 9/9; `pnpm test:e2e` 4/4 (26.0 s).
+  La base distroless nueva se analizó por separado
+  (`gcr.io/distroless/nodejs24-debian13:nonroot@sha256:cb606325…`) con el mismo escáner y las
+  mismas banderas de `scripts/security-scan.sh`: 0 hallazgos HIGH/CRITICAL. Ese análisis cubre
+  el componente que cambió, no la imagen de aplicación completa, que sigue dependiendo de CI.
+  Queda un aviso de Vite por el chunk opcional de MapLibre (1.074,01 kB, 291,74 kB gzip), ya
+  registrado como pendiente en `docs/verification.md`.

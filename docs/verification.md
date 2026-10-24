@@ -28,6 +28,33 @@ propia imagen desde `Dockerfile.db`, derivada de `postgis/postgis:17-3.6-alpine`
   Comparación observada: `'Ávila' < 'Zamora'` = verdadero. El volumen previo se respaldó en
   `.local/backups/pre-alpine-20261024-1209.sql` antes de re-inicializarlo.
 
+## Pipeline de CI y dependencias (24 de octubre)
+
+- El primer run de CI en `main` (`40115531595`, commit `8438846`) falló en `pnpm diagrams:setup`.
+  Causa reproducida sin red: un clon `git clone --no-checkout` deja el índice vacío y
+  `git status --porcelain` informa cada archivo como borrado. El script confundía eso con un
+  checkout sucio.
+- Corrección (commit `e1b682c`): la comprobación de limpieza solo aplica a checkouts ya
+  poblados y se repite después de fijar la revisión revisada; la lógica vive en
+  `scripts/lib/git-checkout.ts` con dos pruebas unitarias. `pnpm diagrams:setup` sobre un clon
+  borrado sale 0 en `25cf3708…` y `pnpm diagrams:build` pasa las cuatro compuertas.
+- Actualizaciones aplicadas a mano, dentro de la espera de 72 h de ADR 006: `vite` 8.3.5,
+  `dexie` 4.4.7, `@aws-sdk/client-s3` 3.1154.0. No se adoptó `pnpm/action-setup` v5.0.0 porque
+  es un salto mayor de acción y la política exige revisar el SHA.
+- Los runs disparados por Dependabot no arrancan en esta cuenta: la anotación dice «The job was
+  not started because recent account payments have failed or your spending limit needs to be
+  increased». Queda como limitación de facturación, no como fallo del código.
+- Verificación posterior: `pnpm check` sale 0 (18 pruebas), `pnpm security:deps` sale 0
+  («No known vulnerabilities found»), `pnpm security:scan` sale 0 sin vulnerabilidades ni
+  secretos, `pnpm test:integration` 9/9, `pnpm test:e2e` 4/4 (26,0 s).
+- Base distroless nueva analizada por separado
+  (`gcr.io/distroless/nodejs24-debian13:nonroot@sha256:cb606325…`) con el escáner y las banderas
+  de `scripts/security-scan.sh`: 0 hallazgos HIGH/CRITICAL. Cubre el componente que cambió, no
+  la imagen de aplicación completa.
+- La imagen de aplicación no se pudo reconstruir en local: el Dockerfile usa
+  `--mount=type=secret` y este Docker no tiene el componente buildx. `pnpm security:image` sobre
+  la imagen completa queda a cargo de CI y no se declara verificado aquí.
+
 ## Ejecutado el 23 de octubre (se conserva)
 
 - `pnpm check`, `pnpm test:integration` (9), `pnpm test:e2e` (4), `pnpm peers check` y
