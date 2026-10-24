@@ -56,6 +56,46 @@ export function App() {
   const isCoordinator =
     profile?.memberships.find((m) => m.associationId === associationId)
       ?.role === 'coordinator';
+  // A sheet is a dialog: Escape closes it and focus stays inside while it is
+  // open, so the form is reachable with the keyboard alone.
+  useEffect(() => {
+    if (selected === null && !createParcel) return;
+    const sheet = document.querySelector<HTMLElement>('.ds-scrim .ds-sheet');
+    if (!sheet) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const focusable = () =>
+      Array.from(
+        sheet.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((element) => !element.hasAttribute('disabled'));
+    focusable()[0]?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setSelected(null);
+        setCreateParcel(false);
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const items = focusable();
+      const first = items[0];
+      const last = items.at(-1);
+      if (!first || !last) return;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      previous?.focus();
+    };
+  }, [selected, createParcel]);
   // A coordinator opens the review queue; a technician opens their parcels.
   useEffect(() => {
     setView(isCoordinator ? 'inspecciones' : 'parcelas');

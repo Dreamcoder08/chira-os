@@ -43,7 +43,7 @@ Runners: `pnpm check`, `pnpm test:e2e`, `pnpm test:integration`.
 - T2 — S2, inline — hecho (`8c783e9`) — consola de escritorio: rail, píldoras, tarjeta, dock y hojas laterales.
 - T3 — S3, inline — hecho (`pendiente`) — shell móvil: barra inferior, header, banda de sincronización, hojas y acción de guardado al pulgar.
 - T4 — S4, inline — hecho (`pendiente`) — cartografía local, worker de MapLibre, escala y controles propios.
-- T5 — S6, inline — pasada de accesibilidad y contraste medido.
+- T5 — S6, inline — hecho (`pendiente`) — foco atrapado en las hojas, Escape para cerrar y 36 pares de contraste medidos en navegador.
 - T6 — S5, S7, inline — verificación completa y registro en docs.
 
 ## Log
@@ -141,3 +141,20 @@ nota de honestidad encima del lienzo.
 1440×900, 834×1112 y 390×844; los únicos errores de consola son los tres 401 de
 la sonda de sesión previa al login. El candado de los hashes: se corrigen en un
 commit de documentación aparte cuando el commit real exista.
+
+### L17 — Contraste medido, no supuesto
+
+El texto de esta interfaz casi nunca está sobre un color plano: el título vive
+sobre el mapa, el topbar y el dock son paneles translúcidos con `blur` y el login
+va sobre un degradado. Para eso `getComputedStyle` no alcanza y axe no sirve:
+reporta `incomplete` sobre degradados y `backdrop-filter`. Se escribió un arnés
+desechable (`.local/contrast.ts`, fuera del repo) que oculta el texto, captura la
+caja exacta, decodifica los píxeles con `sharp` y compara contra el peor píxel en
+la dirección del texto; el color se resuelve por canvas porque `oklab()` con alfa
+no se puede leer de la cadena computada.
+
+Resultado: **36 pares medidos en 1440×900 y 390×844, todos ≥ 4,5:1**. El peor era
+el chip «Demostración» con 4,49:1 (el texto caía sobre el borde de la píldora) y
+pasó a `--ink-700`. El resto se movió entre 5,08:1 (código de parcela sobre el
+hatch) y 17,8:1. Las hojas ahora atrapan el foco, cierran con Escape y devuelven
+el foco al elemento anterior.

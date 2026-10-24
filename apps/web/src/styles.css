@@ -297,7 +297,8 @@ button:disabled,
 .ds-chip--warn {
   background: var(--sand-200);
   border-color: var(--line);
-  color: var(--ink-500);
+  /* Measured: ink-500 on the chip border stops at 4.49:1. */
+  color: var(--ink-700);
 }
 
 .ds-pill {
