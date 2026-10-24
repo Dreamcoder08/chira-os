@@ -39,7 +39,7 @@ quedar bloqueada por el límite de píxeles de la API. Rama `main`, entrega por 
   accepts»: sube un JPEG real de 8064×6048, guarda el borrador y lee el blob desde IndexedDB.
   Afirma 2048×1536, `image/webp`, menos de 20 M de píxeles y menos bytes que el original. RED
   observado con `preparePhoto` devolviendo el archivo intacto: 2 fallos (escritorio y móvil).
-- **T4** (S5, S6) inline — hecho (`pendiente`) — verificación completa y registro en
+- **T4** (S5, S6) inline — hecho (`685a186`) — verificación completa y registro en
   `docs/verification.md` y `README.md`.
 
 ## Log
@@ -80,3 +80,12 @@ quedar bloqueada por el límite de píxeles de la API. Rama `main`, entrega por 
   integración) más sondas propias sobre `fitWithin` con 8 tamaños, incluido el caso 10000×1 donde
   el redondeo a 1 px de alto cambia la relación de aspecto en 0,05 %: es un valor fuera de dominio
   y queda como aviso, no como defecto.
+
+### L7 — CI verde con las fotos reducidas
+
+El run `40133006501` sobre `685a186` termina en `success` con el job `guardian`
+completo: instalación, imagen de base propia, migraciones y semilla, `pnpm check`
+con los 34 tests unitarios, integración, contratos, E2E en Chromium con las dos
+fotos de 48 MP y 12 MP reducidas en el navegador, diagramas validados,
+dependencias, SBOM, escaneo del sistema de archivos, imagen de aplicación, imagen
+de base de datos, backup y restauración.
