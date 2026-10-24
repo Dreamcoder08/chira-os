@@ -49,6 +49,12 @@ test('offline field evidence survives reopening, synchronizes and receives human
   ).toBeVisible();
   // The technician must be able to confirm the photo is stored on the device
   // before syncing; a card that hides it looks like lost evidence.
+  // A lazy image that is below the fold is never decoded, so naturalWidth
+  // stays 0 until it is scrolled into view. The technician scrolls to the card.
+  await page
+    .getByAltText('Evidencia de inspección')
+    .first()
+    .scrollIntoViewIfNeeded();
   await expect
     .poll(() =>
       page
