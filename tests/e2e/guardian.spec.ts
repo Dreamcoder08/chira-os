@@ -229,3 +229,69 @@ test('offline logout survives closing a tab and revokes the cookie on reconnect'
     }),
   ).toBe(0);
 });
+
+test('a 48 MP phone photo is stored at the size the server accepts', async ({
+  page,
+}) => {
+  const { password } = JSON.parse(
+    await readFile('.local/demo-credentials.json', 'utf8'),
+  );
+  await page.goto('/');
+  await page.getByLabel('Correo').fill('tecnico@chira.test');
+  await page.getByLabel('Contraseña').fill(password);
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await page.getByRole('button', { name: 'Preparar trabajo offline' }).click();
+  await expect(
+    page.getByText('Parcelas disponibles sin conexión'),
+  ).toBeVisible();
+
+  // 8064x6048 is what a 48 MP phone camera produces. The API builds sharp with
+  // limitInputPixels: 20_000_000, so this exact file is rejected as
+  // INVALID_IMAGE and the draft is marked blocked.
+  const photo = await sharp({
+    create: { width: 8064, height: 6048, channels: 3, background: '#24734b' },
+  })
+    .jpeg({ quality: 92 })
+    .toBuffer();
+
+  await page.getByRole('button', { name: 'Nueva inspección' }).first().click();
+  await page.getByLabel('Observaciones').fill('Foto de 48 MP');
+  await page.getByLabel('Completé el protocolo de bioseguridad').check();
+  await page.getByLabel('Fotografías').setInputFiles({
+    name: 'campo-48mp.jpg',
+    mimeType: 'image/jpeg',
+    buffer: photo,
+  });
+  await page
+    .getByRole('button', { name: 'Guardar en este dispositivo' })
+    .click();
+  await expect(
+    page.getByText('Pendiente de sincronizar', { exact: true }),
+  ).toBeVisible();
+
+  const stored = await page.evaluate(async () => {
+    const db = await new Promise<IDBDatabase>((ok, fail) => {
+      const r = indexedDB.open('chira-guardian');
+      r.onsuccess = () => ok(r.result);
+      r.onerror = () => fail(r.error);
+    });
+    const draft = await new Promise<{
+      photos: { blob: Blob }[];
+    }>((ok, fail) => {
+      const r = db.transaction('drafts').objectStore('drafts').getAll();
+      r.onsuccess = () => ok(r.result[0]);
+      r.onerror = () => fail(r.error);
+    });
+    db.close();
+    const blob = draft.photos[0]!.blob;
+    const bitmap = await createImageBitmap(blob);
+    const size = { width: bitmap.width, height: bitmap.height };
+    bitmap.close();
+    return { ...size, type: blob.type, bytes: blob.size };
+  });
+
+  expect(stored).toMatchObject({ width: 2048, height: 1536 });
+  expect(stored.type).toBe('image/webp');
+  expect(stored.width * stored.height).toBeLessThan(20_000_000);
+  expect(stored.bytes).toBeLessThan(photo.length);
+});

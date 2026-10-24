@@ -1,6 +1,13 @@
 import { useState, type FormEvent } from 'react';
 import type { Parcel } from '../../../../packages/contracts/src/schemas.ts';
 import { db, type Draft } from '../lib/offline.ts';
+import {
+  ACCEPTED_PHOTO_TYPES,
+  PhotoError,
+  preparePhoto,
+} from '../lib/photo.ts';
+
+const MAX_BYTES = 8 * 1024 * 1024;
 
 export function InspectionForm({
   parcel,
@@ -15,9 +22,50 @@ export function InspectionForm({
   onSaved: () => void;
   onCancel: () => void;
 }) {
-  const [photos, setPhotos] = useState<File[]>([]);
+  const [photos, setPhotos] = useState<{ id: string; blob: Blob }[]>([]);
+  const [preparing, setPreparing] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+
+  async function choose(input: HTMLInputElement) {
+    const files = Array.from(input.files ?? []);
+    input.value = '';
+    if (
+      files.length > 5 ||
+      files.some(
+        (file) =>
+          file.size > MAX_BYTES ||
+          !ACCEPTED_PHOTO_TYPES.includes(file.type as never),
+      )
+    ) {
+      setError(
+        'Selecciona hasta 5 imágenes JPEG, PNG o WebP de máximo 8 MB cada una.',
+      );
+      setPhotos([]);
+      return;
+    }
+    setError('');
+    setPreparing(true);
+    try {
+      const prepared: { id: string; blob: Blob }[] = [];
+      for (const file of files)
+        prepared.push({
+          id: crypto.randomUUID(),
+          blob: await preparePhoto(file),
+        });
+      setPhotos(prepared);
+    } catch (cause) {
+      setPhotos([]);
+      setError(
+        cause instanceof PhotoError
+          ? cause.message
+          : 'No pudimos preparar las imágenes. Intenta de nuevo.',
+      );
+    } finally {
+      setPreparing(false);
+    }
+  }
+
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
@@ -31,7 +79,7 @@ export function InspectionForm({
       notes: String(form.get('notes')).trim(),
       biosecurity: form.get('biosecurity') === 'on',
       observedAt: new Date().toISOString(),
-      photos: photos.map((blob) => ({ id: crypto.randomUUID(), blob })),
+      photos,
       expectedVersion: 0,
       saveOperationId: crypto.randomUUID(),
       submitOperationId: crypto.randomUUID(),
@@ -89,38 +137,21 @@ export function InspectionForm({
             type="file"
             accept="image/jpeg,image/png,image/webp"
             multiple
-            onChange={(event) => {
-              const files = Array.from(event.target.files ?? []);
-              if (
-                files.length > 5 ||
-                files.some(
-                  (f) =>
-                    f.size > 8 * 1024 * 1024 ||
-                    !['image/jpeg', 'image/png', 'image/webp'].includes(f.type),
-                )
-              ) {
-                setError(
-                  'Selecciona hasta 5 imágenes JPEG, PNG o WebP de máximo 8 MB cada una.',
-                );
-                setPhotos([]);
-                event.target.value = '';
-                return;
-              }
-              setError('');
-              setPhotos(files);
-            }}
+            disabled={preparing}
+            onChange={(event) => void choose(event.currentTarget)}
           />
         </label>
         <span className="small">
-          Hasta 5 imágenes · 8 MB por imagen. Se guardan en este dispositivo
-          hasta el envío.
+          Hasta 5 imágenes · 8 MB por imagen. Se reducen a 2048 px en este
+          dispositivo y se guardan hasta el envío.
         </span>
+        {preparing && <p className="small">Preparando las imágenes…</p>}
         {error && (
           <p role="alert" className="error">
             {error}
           </p>
         )}
-        <button disabled={busy}>
+        <button disabled={busy || preparing}>
           {busy ? 'Guardando…' : 'Guardar en este dispositivo'}
         </button>
       </form>
