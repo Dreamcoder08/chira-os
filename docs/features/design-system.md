@@ -41,10 +41,10 @@ Runners: `pnpm check`, `pnpm test:e2e`, `pnpm test:integration`.
 
 - T1 — S1, inline — hecho (`e262487`) — fundaciones: tokens, fuente, iconos y primitivas.
 - T2 — S2, inline — hecho (`8c783e9`) — consola de escritorio: rail, píldoras, tarjeta, dock y hojas laterales.
-- T3 — S3, inline — hecho (`pendiente`) — shell móvil: barra inferior, header, banda de sincronización, hojas y acción de guardado al pulgar.
-- T4 — S4, inline — hecho (`pendiente`) — cartografía local, worker de MapLibre, escala y controles propios.
-- T5 — S6, inline — hecho (`pendiente`) — foco atrapado en las hojas, Escape para cerrar y 36 pares de contraste medidos en navegador.
-- T6 — S5, S7, inline — verificación completa y registro en docs.
+- T3 — S3, inline — hecho (`f4f103f`) — shell móvil: barra inferior, header, banda de sincronización, hojas y acción de guardado al pulgar.
+- T4 — S4, inline — hecho (`f4f103f`) — cartografía local, worker de MapLibre, escala y controles propios.
+- T5 — S6, inline — hecho (`2dac13e`) — foco atrapado en las hojas, Escape para cerrar y 36 pares de contraste medidos en navegador.
+- T6 — S5, S7, inline — hecho (`pendiente`) — verificación completa y registro en docs.
 
 ## Log
 
@@ -158,3 +158,12 @@ el chip «Demostración» con 4,49:1 (el texto caía sobre el borde de la píldo
 pasó a `--ink-700`. El resto se movió entre 5,08:1 (código de parcela sobre el
 hatch) y 17,8:1. Las hojas ahora atrapan el foco, cierran con Escape y devuelven
 el foco al elemento anterior.
+
+### L18 — Cierre del sistema de diseño
+
+Los seis work units quedaron en `main`: fundaciones `e262487`, consola `8c783e9`,
+mapa y shell móvil `f4f103f`, accesibilidad y contraste `2dac13e`. La verificación
+completa está en `docs/verification.md`; el README describe la interfaz sin
+atribuirle capturas ni usuarios reales. Lo que este trabajo **no** prueba: que un
+técnico real use la interfaz sin ayuda. Eso lo mide el protocolo del piloto, no
+una captura de pantalla.

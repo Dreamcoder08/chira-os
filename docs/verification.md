@@ -68,6 +68,34 @@ propia imagen desde `Dockerfile.db`, derivada de `postgis/postgis:17-3.6-alpine`
 - Imagen de aplicación (distroless Node 24 Debian 13) construida y analizada sin hallazgos
   altos/críticos; API y worker empaquetados arrancaron localmente.
 
+## Sistema de diseño e interfaz de consola (24 de octubre)
+
+- Tokens, tipografía e iconos: `Inter Variable` self-hosted (subset latino,
+  48 256 bytes) porque el piloto corre en una LAN sin internet, y 20 iconos SVG
+  propios. Sin dependencias nuevas de runtime más allá de la fuente.
+- Escritorio reconstruido como consola con el mapa al centro: rail de 64 px,
+  píldoras de contexto y estado, tarjeta de parcela translúcida, dock colapsable
+  con métricas y pestañas, y hojas laterales de 480 px para los formularios.
+- Teléfono con shell de app: barra inferior de tres destinos, banda de
+  sincronización permanente, hojas que suben desde abajo con el guardado pegado
+  al pulgar y la pestaña Mapa a pantalla completa.
+- Cartografía local, sin tiles ni red: grilla de 1 km con líneas mayores cada
+  cinco, campo visual por parcela, etiquetas con halo y barra de escala calculada
+  en metros por píxel. Nada sale del origen de la aplicación.
+- Defecto real encontrado en el camino: MapLibre 6 carga su parser en un worker
+  que Vite no emite por sí solo (`Worker failed to load`), así que ninguna fuente
+  se parseaba y el mapa quedaba en blanco. Se resolvió fijando la URL del worker.
+- Accesibilidad: las hojas atrapan el foco, cierran con Escape y devuelven el
+  foco; 36 pares de contraste medidos en navegador a 1440×900 y 390×844, todos
+  ≥ 4,5:1 (peor caso 5,08:1; el chip «Demostración» pasó de 4,49:1 a `ink-700`).
+  La medición se hizo sobre píxeles reales porque el texto vive sobre el mapa, sobre
+  paneles con `backdrop-filter` y sobre el degradado del login, donde
+  `getComputedStyle` no es el fondo pintado y axe reporta `incomplete`.
+- Comprobado: `pnpm check` sale 0 (24 tests unitarios), `pnpm test:e2e` sale 0 con
+  8/8 en los proyectos `desktop` y `mobile` (41,3 s), `pnpm test:integration` sale 0
+  con 17 tests. Capturas revisadas en 1440×900, 834×1112 y 390×844; los únicos
+  errores de consola son tres 401 de la sonda de sesión previa al login.
+
 ## Pendiente, sin atribuirle un resultado verde
 
 - S3 implementado como adaptador opcional, sin pruebas contra un proveedor real ni despliegue.

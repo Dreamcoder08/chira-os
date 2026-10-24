@@ -40,6 +40,16 @@ El seed es idempotente y está bloqueado fuera de bases locales de desarrollo.
 En otra terminal, ejecuta `pnpm worker` para procesar seguimientos internos. El worker
 no manda correo ni mensajes externos. No necesita las credenciales de autenticación.
 
+## Interfaz
+
+El escritorio es una consola con el mapa al centro: rail de iconos, tarjeta de
+parcela sobre el mapa y un panel inferior plegable con métricas y pestañas. En el
+teléfono la aplicación se comporta como una app: barra inferior, hojas que suben
+desde abajo y el mapa a pantalla completa. La cartografía es local —grilla de un
+kilómetro, parcelas y escala—, sin tiles ni pedidos a terceros, porque el piloto
+corre en una red local sin internet. El detalle de tokens, componentes y reglas
+está en `docs/superpowers/specs/2026-10-24-design-system-design.md`.
+
 ## Piloto de campo en teléfonos
 
 Para probar el flujo offline en un teléfono real hay un perfil `pilot` que sirve el sitio
