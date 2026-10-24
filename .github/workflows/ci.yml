@@ -34,6 +34,13 @@ jobs:
       - run: pnpm test:e2e
       - run: pnpm diagrams:setup
       - name: Validate diagrams in Chromium
+        # GitHub's ubuntu-24.04 runners ship an AppArmor policy that blocks
+        # unprivileged user namespaces, so headless Chrome aborts with "No usable
+        # sandbox". The check renders HTML this repository generated from its own
+        # diagram specs on an ephemeral runner, so the sandbox opt-out is bounded
+        # to that inspection. E2E keeps Playwright's own sandbox handling.
+        env:
+          ARCHIFY_CHROME_NO_SANDBOX: '1'
         run: |
           export ARCHIFY_CHROME="$(node --input-type=module -e "import { chromium } from '@playwright/test'; process.stdout.write(chromium.executablePath())")"
           pnpm diagrams:build

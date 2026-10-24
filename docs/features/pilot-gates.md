@@ -134,3 +134,12 @@ ni PR sin decisión humana. Runner: `pnpm check`, `pnpm test:integration`, `pnpm
   el componente que cambió, no la imagen de aplicación completa, que sigue dependiendo de CI.
   Queda un aviso de Vite por el chunk opcional de MapLibre (1.074,01 kB, 291,74 kB gzip), ya
   registrado como pendiente en `docs/verification.md`.
+- **L15** — Run de CI `40117001725` (commit `61ae989`): la corrección de T7 funciona
+  («Archify ready at reviewed revision 25cf3708…») y pasan `pnpm check`, integración 9/9 y E2E
+  4/4 (19,1 s). Falla después la compuerta `browser-check` del diagrama: Chrome aborta con
+  «No usable sandbox!» porque los runners ubuntu-24.04 de GitHub aplican AppArmor y bloquean los
+  namespaces de usuario sin privilegios. El checkout fijado de Archify ya expone la salida
+  `ARCHIFY_CHROME_NO_SANDBOX=1` (`archify/bin/visual-check.mjs`, `chromeVisualBrowserArgs`
+  antepone `--no-sandbox`); comprobado invocando la función con y sin la variable. Se activa solo
+  en ese paso del workflow, con el motivo escrito al lado, porque inspecciona HTML generado por
+  este repositorio en un runner efímero. La prueba real es el siguiente run.
