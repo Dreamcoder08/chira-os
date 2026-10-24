@@ -23,6 +23,8 @@
     "test": "vitest run",
     "test:integration": "RUN_INTEGRATION=1 vitest run tests/integration",
     "test:e2e": "playwright test",
+    "pilot:check": "tsx scripts/pilot-check.ts",
+    "user:create": "tsx --env-file=.env scripts/user-create.ts",
     "contracts": "tsx scripts/openapi.ts && openapi-typescript docs/api/openapi.json -o packages/contracts/src/api.d.ts",
     "security:deps": "pnpm audit --audit-level=high",
     "sbom": "pnpm sbom --sbom-format cyclonedx --out .local/sbom.cdx.json",

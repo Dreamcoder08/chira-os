@@ -1,0 +1,42 @@
+# Pilot origin for a phone on the local network.
+#
+# The PWA captures inspections offline through a service worker, and browsers
+# only register one in a secure context. Over plain http on a LAN address that
+# context does not exist, so the pilot needs TLS even though nothing leaves the
+# network. Caddy issues the certificate from its own local CA; the root
+# certificate is exported to .local/pki for the one-time install on the phone.
+#
+# The API stays bound to 127.0.0.1 and this container runs with host
+# networking, so only the proxy is reachable from other devices.
+
+{
+	# The certificate is local, so there is nothing to renew over the internet.
+	auto_https disable_redirects
+}
+
+https://{$PILOT_HOST:chira.local}:{$PILOT_PORT:8443} {
+	tls internal
+	encode zstd gzip
+
+	handle /api/* {
+		reverse_proxy 127.0.0.1:{$PILOT_API_PORT:3001}
+	}
+
+	handle /health/* {
+		reverse_proxy 127.0.0.1:{$PILOT_API_PORT:3001}
+	}
+
+	# The service worker must never be served from a stale cache: a new build
+	# changes its precache list and the update has to be noticed.
+	handle /sw.js {
+		header Cache-Control "no-cache"
+		root * /srv
+		file_server
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

@@ -21,5 +21,23 @@ services:
       timeout: 3s
       retries: 20
     security_opt: ['no-new-privileges:true']
+  # Pilot origin: TLS for a phone on the local network, so the PWA gets a secure
+  # context and the service worker can register. Only this profile uses it, which
+  # keeps the default stack and its image scans unchanged.
+  proxy:
+    profiles: ['pilot']
+    image: caddy:2.10-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d
+    network_mode: host
+    environment:
+      PILOT_HOST: ${PILOT_HOST:-chira.local}
+      PILOT_PORT: ${PILOT_PORT:-8443}
+    volumes:
+      - ./docker/pilot/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./apps/web/dist:/srv:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    security_opt: ['no-new-privileges:true']
 volumes:
   postgres:
+  caddy-data:
+  caddy-config:
