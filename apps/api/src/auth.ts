@@ -10,6 +10,13 @@ export function makeAuth(pool: Pool, origin: string) {
     throw new Error(
       'A unique BETTER_AUTH_SECRET with 32+ characters is required',
     );
+  // The browser suite signs in repeatedly from one address, which is not the
+  // traffic the limit exists to stop. Production ignores the override, and the
+  // limit itself is pinned by its own integration test.
+  const signInMax =
+    process.env.NODE_ENV === 'production'
+      ? 20
+      : Math.max(5, Number(process.env.AUTH_SIGN_IN_MAX ?? 20) || 20);
   if (process.env.NODE_ENV === 'production' && !origin.startsWith('https://'))
     throw new Error('HTTPS required in production');
   return betterAuth({
@@ -40,7 +47,18 @@ export function makeAuth(pool: Pool, origin: string) {
         secure: origin.startsWith('https://'),
       },
     },
-    rateLimit: { enabled: true, window: 60, max: 20 },
+    rateLimit: {
+      enabled: true,
+      window: 60,
+      max: 20,
+      customRules: {
+        // better-auth defaults to three sign-ins per ten seconds per address.
+        // A pilot team starts work at the same time behind one shared address,
+        // so the fourth technician was rejected; twenty per minute still bounds
+        // a password guess to a rate no one can work through.
+        '/sign-in/email': { window: 60, max: signInMax },
+      },
+    },
     telemetry: { enabled: false },
     logger: { disabled: true },
   });

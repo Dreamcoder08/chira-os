@@ -47,6 +47,15 @@ usuario, sin PR. Runners: `pnpm check`, `pnpm test:integration`, `pnpm test:e2e`
   blobs de IndexedDB con URLs de objeto y se liberan al desmontar la tarjeta; el técnico no debe
   ver una tarjeta vacía que parezca evidencia perdida. Evidencia: prueba E2E que espera
   `naturalWidth > 0` en la miniatura del borrador antes y después de recargar offline.
+- **S9** — La suite E2E prueba el recorrido crítico del piloto también a ancho de teléfono, con
+  entrada táctil, además de escritorio: mismos escenarios, proyectos `desktop` y `mobile`.
+  Evidencia: `pnpm test:e2e` sale 0 con 8/8.
+- **S10** — El límite de intentos de acceso admite a un equipo que empieza el día detrás de una
+  misma dirección, y sigue cortando una ráfaga de conjeturas. La regla es explícita (20 por minuto
+  por dirección) y no el valor por defecto de `better-auth` (3 cada 10 s), que rechazaba al cuarto
+  técnico. En producción la variable `AUTH_SIGN_IN_MAX` no puede relajarlo. Evidencia: prueba de
+  integración con 10 accesos seguidos en 401 y el 429 al superar el límite; con la regla por
+  defecto la misma prueba falla con «attempt 4: expected 429 to be 401».
 
 ## Tasks
 
@@ -63,6 +72,8 @@ usuario, sin PR. Runners: `pnpm check`, `pnpm test:integration`, `pnpm test:e2e`
 - **T7** (S7) inline — hecho. `docs/pilot/protocol.md` con el protocolo y la plantilla.
 - **T8** (S8) inline — hecho. `DraftPhotos` en `InspectionCard.tsx` y las comprobaciones E2E del
   borrador con fotografía.
+- **T9** (S9, S10) inline — hecho. Proyectos `desktop` y `mobile` en `playwright.config.ts`, regla
+  explícita de límite de acceso en `apps/api/src/auth.ts` y prueba de integración del límite.
 
 ## Log
 
@@ -137,3 +148,11 @@ error occurred when fetching the script`. Chromium no registra un service worker
   con `Timeout 10000ms exceeded while waiting on the predicate` sobre `naturalWidth`; después se
   implementó `DraftPhotos` con `URL.createObjectURL` y limpieza en el desmontaje, y la misma prueba
   pasó. `pnpm check` 0, E2E 4/4, integración 3 archivos/15 pruebas.
+- **L13** — El proyecto `mobile` recién añadido falló en el último paso: el coordinador no podía
+  entrar («No se pudo iniciar sesión»). No era el layout. El sondeo de 24 accesos seguidos devolvió
+  `200,200,200,429,…`: `better-auth` aplica su regla propia de 3 intentos cada 10 s por dirección y
+  la suite hace 16 accesos en menos de un minuto desde 127.0.0.1. En el piloto el riesgo es real:
+  cuatro técnicos entrando a la misma hora detrás de una dirección compartida dejan al cuarto
+  afuera. Se fijó la regla en 20 por minuto, se comprobó el rojo con la regla por defecto
+  («attempt 4: expected 429 to be 401») y se dejó `AUTH_SIGN_IN_MAX` solo para el servidor de E2E,
+  ignorada en producción.

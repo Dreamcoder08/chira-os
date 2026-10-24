@@ -114,6 +114,19 @@ propia imagen desde `Dockerfile.db`, derivada de `postgis/postgis:17-3.6-alpine`
 - El run de CI `40118873452` del commit `d5aa103` termina en `success` con el job `guardian`
   completo, incluidas `pnpm security:image`, `pnpm security:database` y la copia de seguridad con
   `pnpm restore:check`.
+- El recorrido crítico del piloto se prueba también a ancho de teléfono: `playwright.config.ts`
+  declara los proyectos `desktop` y `mobile` (Pixel 7, entrada táctil) sobre los mismos escenarios.
+  `pnpm test:e2e` sale 0 con 8/8 (4 escenarios × 2 proyectos) en 20,3 s.
+- Límite de acceso explícito: el valor por defecto de `better-auth` (3 intentos cada 10 s por
+  dirección) rechazaba al cuarto técnico que entra a la vez detrás de una misma dirección; el
+  sondeo lo reprodujo (`200,200,200,429,429,…`) y la prueba de integración falló con
+  «attempt 4: expected 429 to be 401». La regla quedó en 20 por minuto, con la variable
+  `AUTH_SIGN_IN_MAX` aplicable solo fuera de producción y usada por el servidor de E2E.
+  Evidencia: integración 4 archivos/17 pruebas, con 10 accesos seguidos en 401 y el 429 al superar
+  el límite; `pnpm check` 0 con 24 pruebas.
+- El borrador offline muestra sus fotografías antes de sincronizar y después de recargar sin
+  conexión: la prueba E2E espera `naturalWidth > 0` en la miniatura y falló antes del arreglo
+  («Timeout 10000ms exceeded while waiting on the predicate»).
 
 El repositorio `Dreamcoder08/chira-os` está publicado y sincronizado. El análisis de la imagen de
 base de datos dejó de ser un pendiente: se cierra con la imagen propia, no con una exclusión. Los
