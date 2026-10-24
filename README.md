@@ -58,7 +58,8 @@ Las cuentas del piloto se crean desde la terminal con `pnpm user:create`; no hay
 El teléfono necesita el certificado de la autoridad local instalado, porque sin él el navegador
 no registra el service worker y no existe captura sin conexión. El procedimiento completo, el
 guion de la demostración y lo que el piloto **no** cubre están en
-[`docs/pilot/field-demo.md`](docs/pilot/field-demo.md).
+[`docs/pilot/field-demo.md`](docs/pilot/field-demo.md); el protocolo para convertir la sesión en
+evidencia medible está en [`docs/pilot/protocol.md`](docs/pilot/protocol.md).
 
 ## Probar el flujo
 

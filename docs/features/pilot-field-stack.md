@@ -38,6 +38,11 @@ usuario, sin PR. Runners: `pnpm check`, `pnpm test:integration`, `pnpm test:e2e`
   anterior y la contraseña anterior dejan de servir y que la nueva entra con el mismo rol; y una
   prueba de humo del comando con sus códigos de salida.
 
+- **S7** — El piloto tiene un protocolo de validación que convierte la demostración en evidencia:
+  hipótesis, muestra mínima, qué se registra por sesión, criterios de éxito, plantilla de
+  resultados y los límites que hay que declarar al reportar. Evidencia: `docs/pilot/protocol.md`
+  existe, el runbook y el README lo enlazan, y no afirma tracción alguna.
+
 ## Tasks
 
 - **T1** (S1, S2) inline — hecho. Servicio `proxy` en el perfil `pilot` de `compose.yaml`, con
@@ -50,6 +55,7 @@ usuario, sin PR. Runners: `pnpm check`, `pnpm test:integration`, `pnpm test:e2e`
 - **T5** (S4, S5) inline — hecho. `docs/pilot/field-demo.md` con el runbook y el alcance explícito.
 - **T6** (S6) inline — hecho. `pnpm user:password`, `resetUserPassword` y las pruebas unitaria y de
   integración.
+- **T7** (S7) inline — hecho. `docs/pilot/protocol.md` con el protocolo y la plantilla.
 
 ## Log
 
@@ -111,3 +117,9 @@ error occurred when fetching the script`. Chromium no registra un service worker
   reinicio (`closed sessions: 0`), correo inexistente → salida 1, correo inválido → salida 2 con
   el uso; la cuenta temporal y sus filas se borraron después (`SELECT count(*) FROM auth_users`
   = 3, las sembradas).
+- **L11** — T7: el protocolo de `docs/pilot/protocol.md` fija tres hipótesis (captura sin conexión,
+  revisión con evidencia, aislamiento entre asociaciones), una muestra mínima de tres técnicos y un
+  coordinador de dos asociaciones, lo que se registra por sesión, los criterios de éxito y una
+  plantilla de resultados, además de los límites a declarar (red local, sin correo saliente, datos
+  sintéticos, un servidor, una sola sesión no es adopción). Es documentación: se verifica por lectura
+  estructural, no por ejecución.

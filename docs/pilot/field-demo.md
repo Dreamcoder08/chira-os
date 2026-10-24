@@ -22,11 +22,17 @@ Lo que la demostración **no** prueba:
 
 - Despliegue en internet, dominio público ni certificado de una autoridad
   pública.
-- Invitaciones por correo, recuperación de contraseña ni alta de productores.
+- Invitaciones por correo ni recuperación de contraseña por el propio usuario: el operador crea
+  las cuentas con `pnpm user:create` y las reinicia con `pnpm user:password`.
+- Alta de productores: no hay cuentas de productor en esta etapa.
 - Datos reales de productores. El piloto usa datos sintéticos con forma real;
   no se deben cargar datos personales sin un acuerdo de tratamiento.
 - Un número de usuarios concurrentes. La API escucha en `127.0.0.1` y el piloto
   está pensado para pocas personas a la vez.
+
+Para que la sesión cuente como evidencia y no como anécdota, seguir
+[`protocol.md`](protocol.md): fija las hipótesis, la muestra mínima, qué registrar y qué se
+considera éxito.
 
 ## 1. Preparar la máquina
 
