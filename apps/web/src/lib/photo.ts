@@ -10,6 +10,14 @@
  */
 
 export const MAX_PHOTO_EDGE = 2048;
+
+/*
+ * The 8 MB body limit belongs to the upload, not to the camera. A real 48 MP
+ * photo weighs about 15 MB, so rejecting on input size rejected exactly the
+ * files this module exists to rescue. The guard that remains is only there to
+ * refuse absurd inputs before the browser tries to decode them.
+ */
+export const MAX_INPUT_BYTES = 40 * 1024 * 1024;
 export const ACCEPTED_PHOTO_TYPES = [
   'image/jpeg',
   'image/png',
@@ -17,6 +25,13 @@ export const ACCEPTED_PHOTO_TYPES = [
 ] as const;
 
 export class PhotoError extends Error {}
+
+export function acceptsPhoto(file: { size: number; type: string }): boolean {
+  return (
+    file.size <= MAX_INPUT_BYTES &&
+    ACCEPTED_PHOTO_TYPES.includes(file.type as never)
+  );
+}
 
 export function fitWithin(
   width: number,

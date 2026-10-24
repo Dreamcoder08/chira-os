@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { fitWithin, MAX_PHOTO_EDGE } from '../../apps/web/src/lib/photo.ts';
+import {
+  acceptsPhoto,
+  fitWithin,
+  MAX_INPUT_BYTES,
+  MAX_PHOTO_EDGE,
+} from '../../apps/web/src/lib/photo.ts';
 
 describe('photo downscale', () => {
   it('shrinks a 48 MP phone photo so the long edge fits the limit', () => {
@@ -26,5 +31,30 @@ describe('photo downscale', () => {
 
   it('exposes the same edge the server enforces', () => {
     expect(MAX_PHOTO_EDGE).toBe(2048);
+  });
+});
+
+describe('photo input policy', () => {
+  it('accepts a 15 MB phone photo, which the old 8 MB check rejected', () => {
+    expect(acceptsPhoto({ size: 15 * 1024 * 1024, type: 'image/jpeg' })).toBe(
+      true,
+    );
+  });
+
+  it('accepts a file exactly at the decode guard', () => {
+    expect(acceptsPhoto({ size: MAX_INPUT_BYTES, type: 'image/png' })).toBe(
+      true,
+    );
+  });
+
+  it('refuses a file past the decode guard', () => {
+    expect(
+      acceptsPhoto({ size: MAX_INPUT_BYTES + 1, type: 'image/jpeg' }),
+    ).toBe(false);
+  });
+
+  it('refuses a format the server cannot decode', () => {
+    expect(acceptsPhoto({ size: 1024, type: 'image/heic' })).toBe(false);
+    expect(acceptsPhoto({ size: 1024, type: 'application/pdf' })).toBe(false);
   });
 });

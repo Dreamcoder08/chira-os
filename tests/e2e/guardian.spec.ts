@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { randomBytes } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import sharp from 'sharp';
 
@@ -230,7 +231,7 @@ test('offline logout survives closing a tab and revokes the cookie on reconnect'
   ).toBe(0);
 });
 
-test('a 48 MP phone photo is stored at the size the server accepts', async ({
+test('phone photos over the upload limit are stored at the size the server accepts', async ({
   page,
 }) => {
   const { password } = JSON.parse(
@@ -245,23 +246,28 @@ test('a 48 MP phone photo is stored at the size the server accepts', async ({
     page.getByText('Parcelas disponibles sin conexión'),
   ).toBeVisible();
 
-  // 8064x6048 is what a 48 MP phone camera produces. The API builds sharp with
-  // limitInputPixels: 20_000_000, so this exact file is rejected as
-  // INVALID_IMAGE and the draft is marked blocked.
-  const photo = await sharp({
+  // Two real failure modes of a phone camera. 8064x6048 is 48 MP, which the API
+  // rejects through limitInputPixels: 20_000_000. Noise at 12 MP weighs more
+  // than 8 MB, which the old client check rejected before it ever got there.
+  const manyPixels = await sharp({
     create: { width: 8064, height: 6048, channels: 3, background: '#24734b' },
   })
     .jpeg({ quality: 92 })
     .toBuffer();
+  const heavy = await sharp(randomBytes(3024 * 4032 * 3), {
+    raw: { width: 3024, height: 4032, channels: 3 },
+  })
+    .jpeg({ quality: 92 })
+    .toBuffer();
+  expect(heavy.length).toBeGreaterThan(8 * 1024 * 1024);
 
   await page.getByRole('button', { name: 'Nueva inspección' }).first().click();
-  await page.getByLabel('Observaciones').fill('Foto de 48 MP');
+  await page.getByLabel('Observaciones').fill('Fotos de cámara de teléfono');
   await page.getByLabel('Completé el protocolo de bioseguridad').check();
-  await page.getByLabel('Fotografías').setInputFiles({
-    name: 'campo-48mp.jpg',
-    mimeType: 'image/jpeg',
-    buffer: photo,
-  });
+  await page.getByLabel('Fotografías').setInputFiles([
+    { name: '48mp.jpg', mimeType: 'image/jpeg', buffer: manyPixels },
+    { name: 'pesada.jpg', mimeType: 'image/jpeg', buffer: heavy },
+  ]);
   await page
     .getByRole('button', { name: 'Guardar en este dispositivo' })
     .click();
@@ -283,15 +289,23 @@ test('a 48 MP phone photo is stored at the size the server accepts', async ({
       r.onerror = () => fail(r.error);
     });
     db.close();
-    const blob = draft.photos[0]!.blob;
-    const bitmap = await createImageBitmap(blob);
-    const size = { width: bitmap.width, height: bitmap.height };
-    bitmap.close();
-    return { ...size, type: blob.type, bytes: blob.size };
+    return Promise.all(
+      draft.photos.map(async ({ blob }) => {
+        const bitmap = await createImageBitmap(blob);
+        const size = { width: bitmap.width, height: bitmap.height };
+        bitmap.close();
+        return { ...size, type: blob.type, bytes: blob.size };
+      }),
+    );
   });
 
-  expect(stored).toMatchObject({ width: 2048, height: 1536 });
-  expect(stored.type).toBe('image/webp');
-  expect(stored.width * stored.height).toBeLessThan(20_000_000);
-  expect(stored.bytes).toBeLessThan(photo.length);
+  expect(stored).toHaveLength(2);
+  for (const photo of stored) {
+    expect(photo.type).toBe('image/webp');
+    expect(Math.max(photo.width, photo.height)).toBeLessThanOrEqual(2048);
+    expect(photo.width * photo.height).toBeLessThan(20_000_000);
+    expect(photo.bytes).toBeLessThan(8 * 1024 * 1024);
+  }
+  expect(stored[0]).toMatchObject({ width: 2048, height: 1536 });
+  expect(stored[1]).toMatchObject({ width: 1536, height: 2048 });
 });

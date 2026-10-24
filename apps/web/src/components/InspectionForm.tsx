@@ -1,13 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import type { Parcel } from '../../../../packages/contracts/src/schemas.ts';
 import { db, type Draft } from '../lib/offline.ts';
-import {
-  ACCEPTED_PHOTO_TYPES,
-  PhotoError,
-  preparePhoto,
-} from '../lib/photo.ts';
-
-const MAX_BYTES = 8 * 1024 * 1024;
+import { PhotoError, acceptsPhoto, preparePhoto } from '../lib/photo.ts';
 
 export function InspectionForm({
   parcel,
@@ -30,17 +24,8 @@ export function InspectionForm({
   async function choose(input: HTMLInputElement) {
     const files = Array.from(input.files ?? []);
     input.value = '';
-    if (
-      files.length > 5 ||
-      files.some(
-        (file) =>
-          file.size > MAX_BYTES ||
-          !ACCEPTED_PHOTO_TYPES.includes(file.type as never),
-      )
-    ) {
-      setError(
-        'Selecciona hasta 5 imágenes JPEG, PNG o WebP de máximo 8 MB cada una.',
-      );
+    if (files.length > 5 || files.some((file) => !acceptsPhoto(file))) {
+      setError('Selecciona hasta 5 imágenes JPEG, PNG o WebP.');
       setPhotos([]);
       return;
     }
@@ -142,8 +127,8 @@ export function InspectionForm({
           />
         </label>
         <span className="small">
-          Hasta 5 imágenes · 8 MB por imagen. Se reducen a 2048 px en este
-          dispositivo y se guardan hasta el envío.
+          Hasta 5 imágenes. Se reducen a 2048 px en este dispositivo y se
+          guardan hasta el envío.
         </span>
         {preparing && <p className="small">Preparando las imágenes…</p>}
         {error && (
