@@ -124,6 +124,27 @@ propia imagen desde `Dockerfile.db`, derivada de `postgis/postgis:17-3.6-alpine`
   `Upstream request failed: Go requires a credential` y `general` devuelve
   `Permission denied: subagent`. No se le atribuye un PASS que no ocurrió.
 
+## Pantalla de acceso (24 de octubre)
+
+- El epígrafe «NACIDO EN EL VALLE DEL CHIRA» se apoyaba en el punto más claro
+  del degradado del panel con `ink-500`: **1,99:1 medido** (1,08:1 calculado
+  contra ese extremo). Pasó a `sand-50` al 76 % y mide **6,00:1**. Es un hueco
+  de la medición anterior: el arnés solo revisaba los elementos de su lista y
+  el epígrafe nunca estuvo en ella.
+- El formulario respondía a cualquier fallo con la misma frase. Un límite de
+  intentos (`429`, 20 por minuto y por dirección) le decía al técnico que
+  revisara una contraseña que era correcta. Ahora `429` pide esperar un minuto,
+  `401` nombra las credenciales, `5xx` culpa al servidor y solo lo inclasificable
+  conserva el aviso de sesión previa. Cubierto por `tests/unit/login-message.test.ts`.
+- Defecto previo en la prueba E2E, no en el producto: la evidencia de borrador se
+  dibuja con `loading="lazy"` y la base local acumula inspecciones entre corridas,
+  así que el borrador nuevo quedaba bajo el pliegue y la imagen nunca se decodificaba
+  (`naturalWidth` en 0 durante 10 s). Se reprodujo sobre el árbol sin mis cambios
+  (`git stash`, 3 de 3 corridas en escritorio) y se corrigió desplazando la tarjeta
+  a la vista antes de afirmar nada. No se relajó ninguna aserción.
+- Comprobado: `pnpm check` 0 (39 tests unitarios), `pnpm test:e2e` 0 con 10/10 en
+  `desktop` y `mobile` (49,6 s), `pnpm test:integration` 0 con 17 tests.
+
 ## Pendiente, sin atribuirle un resultado verde
 
 - S3 implementado como adaptador opcional, sin pruebas contra un proveedor real ni despliegue.
