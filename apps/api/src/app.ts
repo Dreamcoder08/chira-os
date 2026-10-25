@@ -100,7 +100,10 @@ export async function createApp(options: { logger?: boolean } = {}) {
     hsts: process.env.NODE_ENV === 'production' ? { maxAge: 31536000 } : false,
   });
   await app.register(rateLimit, {
-    max: 120,
+    // The console reads a whole inspection list at once: 58 cards with evidence
+    // photos is roughly 170 GETs in a single visit. Reads get their own budget
+    // so scrolling never breaks the evidence, while writes keep the tighter 120.
+    max: (request) => (request.method === 'GET' ? 300 : 120),
     timeWindow: '1 minute',
     // Public shell assets must not exhaust the quota for protected data requests.
     keyGenerator: (request) =>
