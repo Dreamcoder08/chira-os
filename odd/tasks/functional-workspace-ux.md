@@ -1,0 +1,47 @@
+# Functional workspace UX
+
+Objective: deliver the confirmed UI-first stage without changing persistence or deployment. Branch: `feat/functional-workspace-ux`.
+Delivery: feature-branch-chain (human selected); initial forecast ~350, actual ~550 authored changed lines. One coherent UI slice with tests; no push/PR/deploy. Checks: Playwright desktop/mobile, pnpm check, applicable integration checks.
+
+## Specs
+
+S1. "mejora el diseño ui & Ux , objetivo que sea funcional , implementar buenas practicas de ingeneria frontend , patrones de diseño , performance y mas"
+S2. "y buenas practicas de ingeneria backend objetivo Ya no necesitas next.js + vercel + supabase"
+S3. "- next.js → tanstack start o vinext\n- vercel → workers\n- supabase postgres → d1\n- supabase auth → better auth en d1\n- supabase storage → r2\n- realtime → durable objects\n- redis → kv\n- background jobs → queues + cron triggers\n\nun worker, una factura, ~$5/mes"
+S4. "yes confirmo , autorizo todo y avanza con ODD de forma autonoma"
+Scope decision confirmed by S4: first improve functional UI/UX on existing architecture; Cloudflare migration is a separate subsequent stage. Preserve offline capture, immutable evidence and tenant isolation. No deployment, purchases or data migration in this stage.
+Implementation assumptions: prioritize review/list work over the map outside the map view; label navigation; add useful local search/status filtering and explicit pending-work feedback. Reuse existing data/actions, lazy map and local query cache; no new infrastructure or speculative abstractions. Validate with real browser interactions, including mobile and keyboard, against synthetic isolated state.
+
+## Tasks
+
+T1 | S1,S4 | delegated writer (runtime context backstop at 41,185 tokens); narrow frontend/tests/docs surfaces | done | 13cba7b3e898f1503528edfc2bad02c69e7a0e18; writer RED observed, parent GREEN 6/6 isolated browser tests after format correction.
+T2 | S1-S4 | inline checks; native plan does not require independent verifier | blocked | available checks passed; awaiting decision on supported Node 24 verification; migration constraints recorded.
+
+## Log
+
+L1. Original request verbatim (image supplied separately):
+/home/dreamcoder08/.tmp/gprzUHxT/pi-clipboard-59980363-53d5-40ed-813c-b9d99250b271.png mejora el diseño ui & Ux , objetivo que sea funcional , implementar buenas practicas de ingeneria frontend , patrones de diseño , performance y mas , y buenas practicas de ingeneria backend objetivo Ya no necesitas next.js + vercel + supabase
+
+- next.js → tanstack start o vinext
+- vercel → workers
+- supabase postgres → d1
+- supabase auth → better auth en d1
+- supabase storage → r2
+- realtime → durable objects
+- redis → kv
+- background jobs → queues + cron triggers
+
+un worker, una factura, ~$5/mes
+
+L2. User authorization verbatim: "yes confirmo , autorizo todo y avanza con ODD de forma autonoma"
+L3. Baseline: clean main at 71d8f9619b886a645692abbdd39010f43051bfad. React/Vite, Fastify, Better Auth, PostgreSQL/PostGIS and pg-boss already exist. SECURITY.md and docs/security.md require transaction-scoped tenant context and forced RLS; D1 is not a transparent substitution. No cost estimate verified. RDD switch reads on (global); no review authority created.
+L4. Screenshot evidence: dominant map, clipped inspection cards in bottom dock, unlabeled rail. Mapping delegated read-only for test prerequisites and later migration constraints; UI implementation routed to bounded writer due to runtime context backstop, not file count.
+L5. Writer delivered six files: task-first lists, labeled navigation, conditional lazy map, local filters and pending feedback; isolated Playwright fixtures cover desktop/mobile with 6/6 passed. RED commands failed on missing counts/labels/feedback before source writes. Auth/logout, evidence, tenant context and sync implementations unchanged. No CLI command implementation changed; preservation checks exercised existing UI entrypoints, not a Git-history-dependent committed test. No baseline browser differential was performed.
+L6. Parent `pnpm check`: exit 1 after typecheck, lint and architecture boundaries passed, due to Prettier warnings in App.tsx, workspace.spec.ts and this document. Tests/build were not reached. Node v26.7.0 differs from required Node >=24.19 <25; no runtime installation or global changes authorized implicitly. Default E2E/integration access local credentials and unverified database, so not run; isolated suite does not prove backend authorization.
+L7. User selected delivery option verbatim: "Cadena sobre rama de la funcionalidad — recomendada" (`feature-branch-chain`). Source, behavior tests and related docs remain one coherent slice; do not split tests from implementation merely to meet line guidance. Future independent work gets separate slices. No PR/push authorized by the selection itself.
+L8. Migration evidence from read-only map: packages/data/migrations/001_guardian.sql enables PostGIS geometry/GiST and forced RLS; packages/data/src/database.ts binds verified membership and tenant settings to BEGIN/COMMIT/ROLLBACK. Replacing them with D1 needs a separately validated security and spatial-data design. The ~$5/month target is unverified, not a delivered cost guarantee.
+L9. Parent normalized files with Prettier; diff check passed. Parent isolated Playwright run exit 0, 6/6 passed in 24.0s on desktop/mobile. Warnings about blocked service workers are intentional; these fixtures do not prove real service-worker caching or successful backend synchronization. Corrected full check exited 0: typecheck, lint, architecture boundaries, format, 40 unit tests and production build passed. Build still warns of a 1,064.41 kB map chunk (290.12 kB gzip); conditional mounting avoids loading it on list startup, but no measured speedup is claimed.
+L10. Native assessment initially unassessable because new files were untracked; staging the exact seven feature files resolved scope. Assessment reports medium, 7 paths/595 changed lines, reviewDue=false, reason under_budget, independentVerifier=false. No native lineage started. Risk: none (requested frontend behavior only; existing shared auth, offline persistence, API and backend contracts unchanged).
+L11. UI slice committed as 13cba7b3e898f1503528edfc2bad02c69e7a0e18 (`feat(web): prioritize functional review workspace`), 553 authored changed lines, six files. The slice closes this coherent UI behavior; subsequent independent implementation must use another slice under the selected feature-branch-chain strategy. This tracking document is separate evidence, not a second behavior change. No push, PR or deployment performed.
+L12. Verification remains qualified: all observed checks ran on Node 26.7.0, not the repository-supported Node 24. T2 awaits a decision to provision an isolated Node 24 test runtime (no global switch), or explicitly accept the supported-runtime evidence gap for this stage. Default credential-backed browser/integration suites were not run because the database is unverified; no backend behavior was changed. No baseline browser differential or production service-worker/offline delivery proof is claimed.
+L13. Committed UI slice assessment against 71d8f9619b886a645692abbdd39010f43051bfad: medium, 6 paths/553 changed lines, reviewDue=false, reason under_budget; independentVerifier=false. The untracked tracking file initially prevented assessment; staging it restored explicit scope. No review was started or approval claimed.
