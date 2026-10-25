@@ -98,6 +98,11 @@ con la misma IP, exporta el certificado raíz a `.local/pki/root.crt` y no termi
 origen responde. La IP cambia sola con el DHCP y el certificado está atado a ella: ese paso manual
 ya rompió dos ensayos de sesión. `PILOT_HOST=<IP>` fuerza una dirección concreta.
 
+Para preparar una sesión completa —coordinador, un técnico por teléfono y una parcela sintética
+asignada a cada uno— está `pnpm pilot:session --slug <nombre> --technicians <n>`, que imprime las
+contraseñas una sola vez. `pnpm user:create` crea una cuenta suelta y **no** crea parcelas: un
+técnico provisionado así entra a un espacio vacío y no puede registrar nada.
+
 Las cuentas del piloto se crean desde la terminal con `pnpm user:create`; no hay autorregistro, y
 `pnpm user:password` reemplaza la contraseña de una cuenta existente cuando alguien la olvida.
 El teléfono necesita el certificado de la autoridad local instalado, porque sin él el navegador

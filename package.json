@@ -25,6 +25,7 @@
     "test:e2e": "playwright test",
     "pilot:up": "tsx scripts/pilot-up.ts",
     "pilot:check": "tsx scripts/pilot-check.ts",
+    "pilot:session": "tsx --env-file=.env scripts/pilot-session.ts",
     "user:create": "tsx --env-file=.env scripts/user-create.ts",
     "user:password": "tsx --env-file=.env scripts/user-password.ts",
     "contracts": "tsx scripts/openapi.ts && openapi-typescript docs/api/openapi.json -o packages/contracts/src/api.d.ts",
