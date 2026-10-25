@@ -78,11 +78,14 @@ compilado por HTTPS en la red local, con una autoridad certificadora propia, y d
 escuchando solo en `127.0.0.1:3001`:
 
 ```bash
-pnpm build
-APP_ORIGIN=https://<IP-LOCAL>:8443 pnpm start
-PILOT_HOST=<IP-LOCAL> docker compose --profile pilot up -d proxy
+pnpm pilot:up
 PILOT_HOST=<IP-LOCAL> pnpm pilot:check
 ```
+
+`pnpm pilot:up` toma la dirección de la red local, reinicia la API con ese origen, recrea el proxy
+con la misma IP, exporta el certificado raíz a `.local/pki/root.crt` y no termina hasta que el
+origen responde. La IP cambia sola con el DHCP y el certificado está atado a ella: ese paso manual
+ya rompió dos ensayos de sesión. `PILOT_HOST=<IP>` fuerza una dirección concreta.
 
 Las cuentas del piloto se crean desde la terminal con `pnpm user:create`; no hay autorregistro, y
 `pnpm user:password` reemplaza la contraseña de una cuenta existente cuando alguien la olvida.

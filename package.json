@@ -23,6 +23,7 @@
     "test": "vitest run",
     "test:integration": "RUN_INTEGRATION=1 vitest run tests/integration",
     "test:e2e": "playwright test",
+    "pilot:up": "tsx scripts/pilot-up.ts",
     "pilot:check": "tsx scripts/pilot-check.ts",
     "user:create": "tsx --env-file=.env scripts/user-create.ts",
     "user:password": "tsx --env-file=.env scripts/user-password.ts",

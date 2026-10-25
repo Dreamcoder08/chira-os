@@ -57,6 +57,12 @@ usuario, sin PR. Runners: `pnpm check`, `pnpm test:integration`, `pnpm test:e2e`
   integración con 10 accesos seguidos en 401 y el 429 al superar el límite; con la regla por
   defecto la misma prueba falla con «attempt 4: expected 429 to be 401».
 
+- **S11** — El origen del piloto se levanta con un solo comando que deriva la dirección de la red
+  local, reinicia la API con `APP_ORIGIN` coherente, recrea el proxy atado a esa dirección, exporta
+  el certificado raíz vigente y espera respuestas reales antes de declarar éxito. Un certificado
+  atado a una IP anterior tiene que fallar de forma explícita, no servir una página rota. Evidencia:
+  `pnpm pilot:up` de punta a punta sobre `192.168.1.17` y `pnpm pilot:check` después, 7/7.
+
 ## Tasks
 
 - **T1** (S1, S2) inline — hecho. Servicio `proxy` en el perfil `pilot` de `compose.yaml`, con
@@ -74,6 +80,8 @@ usuario, sin PR. Runners: `pnpm check`, `pnpm test:integration`, `pnpm test:e2e`
   borrador con fotografía.
 - **T9** (S9, S10) inline — hecho. Proyectos `desktop` y `mobile` en `playwright.config.ts`, regla
   explícita de límite de acceso en `apps/api/src/auth.ts` y prueba de integración del límite.
+- **T10** (S11) inline — hecho. `pnpm pilot:up` (`scripts/pilot-up.ts`), reglas puras de dirección y
+  proceso en `scripts/pilot/net.ts` con 9 pruebas unitarias, y el README con un solo comando.
 
 ## Log
 
@@ -156,3 +164,11 @@ error occurred when fetching the script`. Chromium no registra un service worker
   afuera. Se fijó la regla en 20 por minuto, se comprobó el rojo con la regla por defecto
   («attempt 4: expected 429 to be 401») y se dejó `AUTH_SIGN_IN_MAX` solo para el servidor de E2E,
   ignorada en producción.
+
+- **L15** — El paso manual del runbook volvió a fallar: la IP de la máquina cambió por DHCP y el
+  certificado quedó atado a la anterior, de modo que el origen servía un error de TLS. Se escribió
+  `pnpm pilot:up` para que eso deje de depender de la memoria de quien lo ejecuta. Verificado de
+  punta a punta: detectó `192.168.1.17`, detuvo la API anterior con SIGTERM, la reinició con el
+  origen correcto, recreó el proxy, exportó el certificado raíz (`CN=Caddy Local Authority - 2026
+ECC Root`, válido hasta 2036) y terminó con `pnpm pilot:check` en 7/7. El escalado a SIGKILL
+  quedó por el bloqueo de event loop ya observado, donde SIGTERM no alcanzó.
