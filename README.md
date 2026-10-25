@@ -56,6 +56,11 @@ se muestra en la ficha; un registro sin conteo sigue siendo válido y se lee com
 registrado». El conteo es una observación del técnico, no un diagnóstico: nada en la aplicación
 afirma que una fotografía confirme una enfermedad.
 
+La ficha de una parcela muestra su **historial**: las últimas visitas, de la más nueva a la más
+vieja, cada una con su fecha, su incidencia y su estado. Un borrador no aparece: es trabajo sin
+enviar en este dispositivo, no evidencia. Si una visita no tiene conteo, se muestra igual y dice
+«sin muestreo», para que el hueco sea visible en vez de desaparecer.
+
 Parcelas y revisión priorizan las listas, con desplazamiento continuo y navegación
 etiquetada. Un encabezado compacto identifica la tarea y conserva la fecha y el aviso
 de datos sintéticos en escritorio y móvil. Busca localmente por parcela, productor, cultivo u observación; en

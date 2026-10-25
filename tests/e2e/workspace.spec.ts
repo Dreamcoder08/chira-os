@@ -25,6 +25,7 @@ async function openWorkspace(
     status: index ? 'reviewed' : 'submitted',
     version: 1,
     observedAt: '2026-01-01T12:00:00.000Z',
+    sampling: index ? null : { plantsObserved: 40, plantsAffected: 3 },
   }));
   await page.route('**/api/**', async (route) => {
     const path = new URL(route.request().url()).pathname;
@@ -67,6 +68,15 @@ function navigation(page: Page, mobile: boolean) {
     name: mobile ? 'Navegación' : 'Principal',
     exact: true,
   });
+}
+
+// A coordinator lands on the review list. The rail owns navigation on a wide
+// screen and is hidden on a phone, where the tab bar does the same job.
+async function openParcelList(page: Page): Promise<void> {
+  const rail = page.getByRole('link', { name: 'Mis parcelas', exact: true });
+  if (await rail.isVisible()) await rail.click();
+  else
+    await page.getByRole('button', { name: 'Parcelas', exact: true }).click();
 }
 
 test('secondary metrics expand by keyboard without hiding pending work', async ({
@@ -408,4 +418,22 @@ test('records a sampling count and shows incidence without claiming a diagnosis'
   await expect(
     page.getByText('sin diagnóstico automático', { exact: false }),
   ).toBeVisible();
+});
+
+test('shows the recent visits of a parcel with their incidence', async ({
+  page,
+}) => {
+  // A coordinator lands on the review list, so the parcel tiles are one
+  // navigation step away.
+  await openWorkspace(page);
+  await openParcelList(page);
+  await page.getByRole('button', { name: 'Ver Los Mangos en el mapa' }).click();
+  const history = page.getByLabel('Historial de la parcela');
+  await expect(
+    history.getByText('Incidencia 7,5 %', { exact: true }),
+  ).toBeVisible();
+  await expect(
+    history.getByText('3 de 40 plantas', { exact: true }),
+  ).toBeVisible();
+  await expect(history.getByText('Enviada', { exact: true })).toBeVisible();
 });

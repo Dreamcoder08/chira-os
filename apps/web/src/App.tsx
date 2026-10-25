@@ -23,6 +23,9 @@ import { ApiError, request } from './lib/api.ts';
 import { Login } from './components/Login.tsx';
 import { InspectionForm } from './components/InspectionForm.tsx';
 import { InspectionCard } from './components/InspectionCard.tsx';
+import { parcelHistory } from './lib/history.ts';
+import { formatShortDate } from './lib/format.ts';
+import { formatPercent } from './lib/incidence.ts';
 import { ParcelForm } from './components/ParcelForm.tsx';
 import {
   finishLogout,
@@ -299,6 +302,13 @@ export function App() {
   );
   const name = (id: string) =>
     parcels.find((p) => p.id === id)?.name ?? 'Parcela de la asociación';
+  /*
+   * History reads the unfiltered mirror on purpose: the search box narrows what
+   * the technician is looking at, it does not decide what happened in a parcel.
+   */
+  const history = active
+    ? parcelHistory(local.data?.inspections ?? [], active.id)
+    : [];
   const matches = (search: string, ...values: string[]) =>
     values
       .join(' ')
@@ -533,6 +543,40 @@ export function App() {
                   </dd>
                 </div>
               </dl>
+              <section
+                className="ds-parcel-history"
+                aria-label="Historial de la parcela"
+              >
+                <h3>Historial</h3>
+                {history.length === 0 ? (
+                  <p className="ds-history-empty">
+                    Sin inspecciones registradas.
+                  </p>
+                ) : (
+                  <ol>
+                    {history.map((entry) => (
+                      <li key={entry.id}>
+                        <span className="ds-history-date">
+                          {formatShortDate(entry.observedAt)}
+                        </span>
+                        <span className="ds-history-value">
+                          {entry.ratio === null
+                            ? 'Sin muestreo'
+                            : `Incidencia ${formatPercent(entry.ratio)}`}
+                        </span>
+                        <span className="ds-history-detail">
+                          {entry.ratio === null
+                            ? 'Sin conteo de plantas'
+                            : `${entry.plantsAffected} de ${entry.plantsObserved} plantas`}
+                        </span>
+                        <span className="ds-history-status">
+                          {entry.status === 'reviewed' ? 'Revisada' : 'Enviada'}
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </section>
               <button
                 className="ds-btn ds-btn--primary"
                 onClick={() => {
