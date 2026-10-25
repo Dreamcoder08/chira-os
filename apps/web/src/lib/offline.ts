@@ -17,6 +17,8 @@ export type Draft = {
   authorId: string;
   notes: string;
   biosecurity: boolean;
+  /** Structured sampling; drafts saved before it existed read as unmeasured. */
+  sampling?: { plantsObserved: number; plantsAffected: number } | null;
   observedAt: string;
   photos: { id: string; blob: Blob }[];
   expectedVersion: number;
@@ -96,6 +98,7 @@ async function sync(associationId: string) {
             parcelId: draft.parcelId,
             notes: draft.notes,
             biosecurity: draft.biosecurity,
+            sampling: draft.sampling ?? null,
             observedAt: draft.observedAt,
             photoIds: draft.photos.map((p) => p.id),
           }),

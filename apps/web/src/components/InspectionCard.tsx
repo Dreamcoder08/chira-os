@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import type { Inspection } from '../../../../packages/contracts/src/schemas.ts';
 import { db, type Draft } from '../lib/offline.ts';
 import { request } from '../lib/api.ts';
+import { formatPercent } from '../lib/incidence.ts';
 
 // A draft keeps its photos as blobs in IndexedDB, so they have no server URL
 // yet. Without this the technician sees an empty card and cannot tell whether
@@ -117,6 +118,14 @@ export function InspectionCard({
         </span>
       </div>
       <p className="observation">{inspection.notes}</p>
+      <p className="small sampling-summary">
+        {inspection.sampling
+          ? `Muestreo: ${inspection.sampling.plantsAffected} de ${inspection.sampling.plantsObserved} plantas con síntomas (incidencia ${formatPercent(
+              inspection.sampling.plantsAffected /
+                inspection.sampling.plantsObserved,
+            )}).`
+          : 'Sin muestreo registrado.'}
+      </p>
       <div className="small">
         {new Date(inspection.observedAt).toLocaleString('es-PE')} ·{' '}
         {inspection.biosecurity

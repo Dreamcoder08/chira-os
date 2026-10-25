@@ -50,6 +50,12 @@ servidor sigue guardando WebP de 2048 px. El detalle y las mediciones están en
 
 ## Interfaz
 
+Cada inspección registra un **muestreo** además de las observaciones: cuántas plantas se
+evaluaron y cuántas mostraban síntomas. La incidencia se calcula a partir de esos dos números y
+se muestra en la ficha; un registro sin conteo sigue siendo válido y se lee como «sin muestreo
+registrado». El conteo es una observación del técnico, no un diagnóstico: nada en la aplicación
+afirma que una fotografía confirme una enfermedad.
+
 Parcelas y revisión priorizan las listas, con desplazamiento continuo y navegación
 etiquetada. Un encabezado compacto identifica la tarea y conserva la fecha y el aviso
 de datos sintéticos en escritorio y móvil. Busca localmente por parcela, productor, cultivo u observación; en

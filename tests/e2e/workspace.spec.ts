@@ -381,3 +381,31 @@ test('offline capture shows pending work separately from network availability', 
     .click();
   await expect(page.getByLabel('Mapa de ubicación de parcelas')).toBeVisible();
 });
+
+test('records a sampling count and shows incidence without claiming a diagnosis', async ({
+  page,
+}) => {
+  await openWorkspace(page, false);
+  await page
+    .getByRole('button', { name: 'Nueva inspección', exact: true })
+    .first()
+    .click();
+  await page
+    .getByLabel('Observaciones', { exact: true })
+    .fill('Conteo de plantas en el lote norte');
+  await page.getByLabel('Completé el protocolo de bioseguridad').check();
+  await page.getByLabel('Plantas evaluadas').fill('40');
+  await page.getByLabel('Con síntomas').fill('5');
+  await expect(page.getByText(/Incidencia 12,5/)).toBeVisible();
+  await page
+    .getByRole('button', { name: 'Guardar en este dispositivo' })
+    .click();
+  await expect(
+    page.getByText('Muestreo: 5 de 40 plantas con síntomas', { exact: false }),
+  ).toBeVisible();
+  // The count is a number the technician observed, not a verdict: the screen
+  // keeps saying that nothing here is diagnosed automatically.
+  await expect(
+    page.getByText('sin diagnóstico automático', { exact: false }),
+  ).toBeVisible();
+});

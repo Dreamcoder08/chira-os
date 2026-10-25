@@ -31,6 +31,23 @@ import { makeAuth } from './auth.ts';
 import { isTrustedOrigin } from './origin.ts';
 
 const parcelProjection = `id,name,producer_name AS "producerName",crop,hectares::float,ST_AsGeoJSON(location)::json AS location,assigned_to AS "assignedTo"`;
+const inspectionProjection = `id,parcel_id AS "parcelId",author_id AS "authorId",notes,biosecurity,photo_ids AS "photoIds",plants_observed AS "plantsObserved",plants_affected AS "plantsAffected",status,version,to_char(observed_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "observedAt"`;
+type InspectionRow = Omit<S.Inspection, 'sampling'> & {
+  plantsObserved: number | null;
+  plantsAffected: number | null;
+};
+// Rows written before sampling existed come back with both columns null and
+// must keep reading as "not measured" instead of a zero count.
+function withSampling(row: InspectionRow): S.Inspection {
+  const { plantsObserved, plantsAffected, ...rest } = row;
+  return {
+    ...rest,
+    sampling:
+      plantsObserved === null || plantsAffected === null
+        ? null
+        : { plantsObserved, plantsAffected },
+  };
+}
 function webHeaders(request: FastifyRequest) {
   const headers = new Headers();
   for (const [name, value] of Object.entries(request.headers))
@@ -318,14 +335,12 @@ export async function createApp(options: { logger?: boolean } = {}) {
     '/api/v1/inspections',
     { schema: { response: { 200: Type.Array(S.InspectionSchema) } } },
     async (request) =>
-      scoped(
-        request,
-        async (client) =>
-          (
-            await client.query(
-              `SELECT id,parcel_id AS "parcelId",author_id AS "authorId",notes,biosecurity,photo_ids AS "photoIds",status,version,to_char(observed_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "observedAt" FROM inspections ORDER BY updated_at DESC LIMIT 500`,
-            )
-          ).rows,
+      scoped(request, async (client) =>
+        (
+          await client.query<InspectionRow>(
+            `SELECT ${inspectionProjection} FROM inspections ORDER BY updated_at DESC LIMIT 500`,
+          )
+        ).rows.map(withSampling),
       ),
   );
   app.put<{ Params: { id: string }; Body: S.EditInspectionInput }>(
@@ -366,6 +381,7 @@ export async function createApp(options: { logger?: boolean } = {}) {
                 authorId: principal.userId,
                 status: 'draft',
                 version: b.expectedVersion,
+                sampling: b.sampling ?? null,
               },
               b.expectedVersion,
             ),
@@ -563,7 +579,7 @@ export async function createApp(options: { logger?: boolean } = {}) {
       coordinator(principal);
       const rows = (
         await client.query(
-          'SELECT id,parcel_id,notes,status,observed_at FROM inspections ORDER BY observed_at',
+          'SELECT id,parcel_id,notes,plants_observed,plants_affected,status,observed_at FROM inspections ORDER BY observed_at',
         )
       ).rows;
       await new PostgresInspectionRepository(client, principal).audit(
@@ -571,12 +587,14 @@ export async function createApp(options: { logger?: boolean } = {}) {
         principal.associationId,
       );
       return [
-        'id,parcel_id,notes,status,observed_at',
+        'id,parcel_id,notes,plants_observed,plants_affected,status,observed_at',
         ...rows.map((r) =>
           [
             r.id,
             r.parcel_id,
             r.notes,
+            r.plants_observed ?? '',
+            r.plants_affected ?? '',
             r.status,
             new Date(r.observed_at).toISOString(),
           ]

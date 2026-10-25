@@ -3,6 +3,7 @@ import {
   editInspection,
   submitInspection,
   reviewInspection,
+  incidence,
   safeCsvCell,
   type Inspection,
 } from '../../packages/domain/src/guardian.ts';
@@ -13,6 +14,7 @@ const draft: Inspection = {
   authorId: 'tech-1',
   notes: 'Hojas amarillas; requiere inspección humana',
   biosecurity: true,
+  sampling: null,
   photoIds: [],
   status: 'draft',
   version: 1,
@@ -84,5 +86,57 @@ describe('spreadsheet export', () => {
   );
   it('quotes commas, double quotes and newlines without interpreting HTML', () => {
     expect(safeCsvCell('A,"B"\n<script>')).toBe('"A,""B""\n<script>"');
+  });
+});
+
+describe('Structured sampling', () => {
+  const measured = (plantsObserved: number, plantsAffected: number) =>
+    editInspection(
+      draft,
+      { ...draft, sampling: { plantsObserved, plantsAffected } },
+      'tech-1',
+      1,
+    );
+
+  it('records a count and derives incidence from it', () => {
+    const saved = measured(40, 5);
+    expect(saved.sampling).toEqual({ plantsObserved: 40, plantsAffected: 5 });
+    expect(incidence(saved.sampling)).toBe(0.125);
+  });
+  it('accepts a visit with no symptomatic plants', () => {
+    expect(incidence(measured(30, 0).sampling)).toBe(0);
+  });
+  it('refuses more symptomatic plants than evaluated ones', () => {
+    expect(() => measured(10, 11)).toThrow('INVALID_SAMPLING');
+  });
+  it('refuses a sample of zero plants', () => {
+    expect(() => measured(0, 0)).toThrow('INVALID_SAMPLING');
+  });
+  it('refuses fractional counts', () => {
+    expect(() => measured(10.5, 2)).toThrow('INVALID_SAMPLING');
+  });
+  it('refuses a sample larger than any technician could walk', () => {
+    expect(() => measured(501, 2)).toThrow('INVALID_SAMPLING');
+  });
+  it('keeps a visit without sampling valid and unmeasured', () => {
+    const saved = editInspection(
+      { ...draft, sampling: { plantsObserved: 10, plantsAffected: 1 } },
+      { ...draft, sampling: null },
+      'tech-1',
+      1,
+    );
+    expect(saved.sampling).toBeNull();
+    expect(incidence(saved.sampling)).toBeNull();
+  });
+  it('normalises an omitted count to unmeasured instead of undefined', () => {
+    const withoutSampling = { ...draft } as Partial<Inspection>;
+    delete withoutSampling.sampling;
+    const saved = editInspection(
+      draft,
+      withoutSampling as Inspection,
+      'tech-1',
+      1,
+    );
+    expect(saved.sampling).toBeNull();
   });
 });

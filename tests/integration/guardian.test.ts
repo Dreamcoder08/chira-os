@@ -113,6 +113,42 @@ describe('tenant isolation at real HTTP and PostgreSQL boundaries', () => {
 });
 
 describe('evidence flow and hostile inputs', () => {
+  it('stores the sampling count and reads an unmeasured row as unmeasured', async () => {
+    const id = crypto.randomUUID();
+    const principal = {
+      userId: fixture.techId,
+      associationId: fixture.associationId,
+    };
+    const evidence = {
+      id,
+      parcelId: fixture.parcelId,
+      authorId: fixture.techId,
+      notes: 'Muestreo de cuarenta plantas',
+      biosecurity: true,
+      sampling: { plantsObserved: 40, plantsAffected: 5 },
+      photoIds: [],
+      status: 'draft' as const,
+      version: 1,
+      observedAt: new Date().toISOString(),
+    };
+    await withPrincipal(pool, principal, async (client, p) =>
+      new PostgresInspectionRepository(client, p).save(evidence),
+    );
+    const stored = await withPrincipal(pool, principal, async (client, p) =>
+      new PostgresInspectionRepository(client, p).find(id),
+    );
+    expect(stored?.sampling).toEqual({ plantsObserved: 40, plantsAffected: 5 });
+
+    // A row recorded before this column existed must stay readable, not guessed.
+    await admin.query(
+      'UPDATE inspections SET plants_observed=NULL,plants_affected=NULL WHERE id=$1',
+      [id],
+    );
+    const legacy = await withPrincipal(pool, principal, async (client, p) =>
+      new PostgresInspectionRepository(client, p).find(id),
+    );
+    expect(legacy?.sampling).toBeNull();
+  });
   it('does not overwrite an inspection created after an absent-row read', async () => {
     const id = crypto.randomUUID();
     const principal = {
@@ -125,6 +161,7 @@ describe('evidence flow and hostile inputs', () => {
       authorId: fixture.techId,
       notes: 'Winning evidence',
       biosecurity: true,
+      sampling: null,
       photoIds: [],
       status: 'draft' as const,
       version: 1,
