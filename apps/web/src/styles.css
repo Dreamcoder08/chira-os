@@ -346,7 +346,7 @@ button:disabled,
 
 .ds-shell {
   display: grid;
-  grid-template-columns: 64px minmax(0, 1fr);
+  grid-template-columns: 168px minmax(0, 1fr);
   height: 100dvh;
   background: var(--canvas);
 }
@@ -382,10 +382,13 @@ button:disabled,
 }
 
 .ds-rail-item {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 144px;
+  min-height: 44px;
+  padding: 8px 12px;
+  font-size: 12px;
   border-radius: var(--radius-1);
   color: var(--ink-300);
   transition:
@@ -428,6 +431,7 @@ button:disabled,
   display: grid;
   grid-template-rows: 60px minmax(0, 1fr);
   min-width: 0;
+  min-height: 0;
 }
 
 /* -------------------------------------------------------------- topbar */
@@ -498,14 +502,21 @@ button:disabled,
 /* --------------------------------------------------------------- stage */
 
 .ds-stage {
-  /* One number drives the dock, the map controls and the scale bar, so the
-     three can never drift apart again. */
-  --dock-height: min(44vh, 400px);
+  --dock-height: 0px;
   position: relative;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.ds-stage[data-view='mapa'] {
   overflow: hidden;
+}
+
+.ds-stage[data-view='mapa'] .ds-heading {
+  display: none;
 }
 
 .ds-map {
@@ -626,7 +637,7 @@ button:disabled,
 .ds-heading {
   position: relative;
   z-index: 1;
-  max-width: 430px;
+  max-width: 680px;
   padding: 22px 26px 0;
   /* The map stays draggable behind the title. */
   pointer-events: none;
@@ -733,9 +744,9 @@ button:disabled,
   z-index: 2;
   display: flex;
   flex-direction: column;
-  height: var(--dock-height);
-  margin: auto 16px 16px;
-  overflow: hidden;
+  flex-shrink: 0;
+  margin: 18px 16px 16px;
+  padding-top: 16px;
   border: 1px solid var(--line);
   border-radius: var(--radius-3);
   background: color-mix(in oklab, var(--sand-50) 90%, transparent);
@@ -772,10 +783,7 @@ button:disabled,
 }
 
 .ds-dock-body {
-  display: grid;
-  flex: 1;
-  grid-template-rows: auto auto auto minmax(0, 1fr);
-  min-height: 0;
+  display: block;
 }
 
 /* ------------------------------------------------------------ sync strip */
@@ -938,9 +946,39 @@ button:disabled,
 .ds-dock-scroll {
   min-height: 0;
   padding: 0 18px 18px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
+}
+
+.ds-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+}
+
+.ds-filters label {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.ds-results {
+  margin: 12px 0;
+  color: var(--ink-500);
+  font-size: 12px;
+}
+
+.ds-queue {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ds-parcel-tile,
+.inspection-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .ds-section-head {
@@ -1654,8 +1692,7 @@ input[type='checkbox'] {
   .ds-stage:has(.ds-map[data-visible='true']) .ds-heading,
   .ds-stage:has(.ds-map[data-visible='true']) .ds-dock,
   .ds-stage:has(.ds-map[data-visible='true']) .ds-export,
-  .ds-stage:has(.ds-map[data-visible='true']) .ds-footer,
-  .ds-stage:has(.ds-map[data-visible='true']) .ds-parcel-card {
+  .ds-stage:has(.ds-map[data-visible='true']) .ds-footer {
     display: none;
   }
 
@@ -1685,9 +1722,11 @@ input[type='checkbox'] {
   }
 
   .ds-parcel-card {
-    position: static;
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    left: 16px;
     width: auto;
-    margin: 14px 16px 0;
   }
 
   .ds-dock {

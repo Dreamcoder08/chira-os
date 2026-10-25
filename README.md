@@ -50,13 +50,17 @@ servidor sigue guardando WebP de 2048 px. El detalle y las mediciones están en
 
 ## Interfaz
 
-El escritorio es una consola con el mapa al centro: rail de iconos, tarjeta de
-parcela sobre el mapa y un panel inferior plegable con métricas y pestañas. En el
-teléfono la aplicación se comporta como una app: barra inferior, hojas que suben
-desde abajo y el mapa a pantalla completa. La cartografía es local —grilla de un
-kilómetro, parcelas y escala—, sin tiles ni pedidos a terceros, porque el piloto
-corre en una red local sin internet. El detalle de tokens, componentes y reglas
-está en `docs/superpowers/specs/2026-10-24-design-system-design.md`.
+Parcelas y revisión priorizan las listas, con desplazamiento continuo y navegación
+etiquetada. Busca localmente por parcela, productor, cultivo u observación; en
+inspecciones también puedes filtrar por estado y limpiar los filtros. Los contadores
+separan los envíos en este dispositivo, los registros por revisar y los revisados.
+**Con conexión no significa sincronizado**: los pendientes locales siguen visibles.
+
+El mapa se carga solo al abrir **Mapa** o **Ver parcela en el mapa**. La cartografía
+es local —grilla de un kilómetro, parcelas y escala—, sin tiles ni pedidos a terceros.
+En el teléfono se conserva la barra inferior y los formularios en hojas con foco
+contenido y cierre mediante Escape. Las acciones de registro, revisión y exportación
+mantienen sus permisos y flujos existentes.
 
 ## Piloto de campo en teléfonos
 
@@ -126,7 +130,18 @@ pnpm run sbom
 pnpm security:scan
 ```
 
-Las pruebas de integración y navegador usan los usuarios sintéticos y revocan sus sesiones.
+Para comprobar solo la interfaz sin base de datos, credenciales ni archivos de entorno:
+
+```bash
+pnpm exec playwright test --config playwright.workspace.config.ts
+```
+
+Esta suite abre Vite en `127.0.0.1:5187`, intercepta la API con datos sintéticos y usa
+almacenamiento efímero por caso. Comprueba listas, filtros, navegación, captura local
+y entradas a formularios/revisión en escritorio y móvil; no prueba autorización del
+servidor ni sustituye la suite integrada.
+
+Las pruebas de integración y navegador de la configuración predeterminada usan los usuarios sintéticos y revocan sus sesiones.
 Ejecuta esas suites **secuencialmente**, sin un usuario trabajando en la demo. No las ejecutes
 contra bases con información real. Playwright requiere `pnpm exec playwright install chromium`;
 algunas distribuciones también necesitan `pnpm exec playwright install --with-deps chromium`.
