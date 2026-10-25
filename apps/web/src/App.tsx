@@ -473,29 +473,34 @@ export function App() {
             </div>
           )}
           <section className="ds-heading" aria-labelledby="ds-title">
-            <span className="ds-eyebrow">
-              CAMPO CONECTADO, INCLUSO SIN SEÑAL
-            </span>
-            <h1 id="ds-title">
-              {isCoordinator
-                ? 'Una mirada a tu asociación.'
-                : 'Cada visita cuenta.'}
-            </h1>
-            <p>
-              {isCoordinator
-                ? 'Revisa la evidencia y acompaña las decisiones de tu equipo.'
-                : 'Registra lo que ves hoy. Protege lo que crece mañana.'}
-            </p>
-            <span className="ds-date">
-              {new Date().toLocaleDateString('es-PE', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              })}
-            </span>
-            <span className="ds-demo">
-              Demostración · datos sintéticos · sin diagnóstico automático
-            </span>
+            <div className="ds-heading-copy">
+              <h1 id="ds-title">
+                {view === 'parcelas'
+                  ? 'Parcelas de tu equipo'
+                  : isCoordinator
+                    ? 'Revisión de campo'
+                    : 'Inspecciones de campo'}
+              </h1>
+              <p>
+                {view === 'parcelas'
+                  ? 'Consulta tus parcelas, prepara una visita o registra una inspección.'
+                  : isCoordinator
+                    ? 'Revisa las observaciones y la evidencia recogida por tu equipo.'
+                    : 'Consulta tus visitas y los envíos guardados en este dispositivo.'}
+              </p>
+            </div>
+            <div className="ds-heading-meta">
+              <span className="ds-date">
+                {new Date().toLocaleDateString('es-PE', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })}
+              </span>
+              <span className="ds-demo">
+                Demostración · datos sintéticos · sin diagnóstico automático
+              </span>
+            </div>
           </section>
           {active && view === 'mapa' && (
             <article className="ds-parcel-card">
@@ -570,7 +575,8 @@ export function App() {
                   </button>
                 </div>
               </div>
-              <div className="ds-stats">
+              <details className="ds-stats" aria-label="Resumen del equipo">
+                <summary>Resumen del equipo</summary>
                 <div>
                   <span>PARCELAS EN ESTE EQUIPO</span>
                   <strong>{parcels.length.toString().padStart(2, '0')}</strong>
@@ -600,7 +606,7 @@ export function App() {
                       : 'Sin borradores locales pendientes'}
                   </small>
                 </div>
-              </div>
+              </details>
               <div className="ds-dock-tabs" role="tablist" aria-label="Panel">
                 <button
                   type="button"

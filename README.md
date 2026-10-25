@@ -51,13 +51,22 @@ servidor sigue guardando WebP de 2048 px. El detalle y las mediciones están en
 ## Interfaz
 
 Parcelas y revisión priorizan las listas, con desplazamiento continuo y navegación
-etiquetada. Busca localmente por parcela, productor, cultivo u observación; en
+etiquetada. Un encabezado compacto identifica la tarea y conserva la fecha y el aviso
+de datos sintéticos en escritorio y móvil. Busca localmente por parcela, productor, cultivo u observación; en
 inspecciones también puedes filtrar por estado y limpiar los filtros. Los contadores
 separan los envíos en este dispositivo, los registros por revisar y los revisados.
 **Con conexión no significa sincronizado**: los pendientes locales siguen visibles.
+Las estadísticas secundarias se consultan en **Resumen del equipo**, desplegable con
+teclado; el estado de pendientes y las acciones de sincronización permanecen fuera
+del desplegable.
 
 El mapa se carga solo al abrir **Mapa** o **Ver parcela en el mapa**. La cartografía
 es local —grilla de un kilómetro, parcelas y escala—, sin tiles ni pedidos a terceros.
+La aclaración de cartografía local permanece visible en escritorio y móvil, sin tapar
+la escala. Los controles del mapa tienen un área de 44 × 44 px en el teléfono y el
+encuadre reserva espacio para que no tapen las etiquetas. El estado accesible de carga
+termina al completar la carga y el encuadre inicial. El panel de trabajo se oculta en
+el mapa y vuelve al regresar a las listas.
 En el teléfono se conserva la barra inferior y los formularios en hojas con foco
 contenido y cierre mediante Escape. Las acciones de registro, revisión y exportación
 mantienen sus permisos y flujos existentes.

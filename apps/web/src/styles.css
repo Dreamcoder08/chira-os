@@ -631,45 +631,67 @@ button:disabled,
 }
 
 .ds-map-note {
-  display: none;
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 2;
+  max-width: 300px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-1);
+  background: color-mix(in oklab, var(--sand-50) 92%, transparent);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink-500);
+  pointer-events: none;
 }
 
 .ds-heading {
   position: relative;
   z-index: 1;
-  max-width: 680px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 24px;
   padding: 22px 26px 0;
-  /* The map stays draggable behind the title. */
-  pointer-events: none;
+}
+
+.ds-heading-copy {
+  min-width: 0;
 }
 
 .ds-heading h1 {
-  margin-top: 10px;
-  font-size: clamp(24px, 2.1vw, 33px);
+  margin: 0;
+  font-size: clamp(22px, 2.1vw, 28px);
   font-weight: 560;
   letter-spacing: -0.03em;
-  line-height: 1.08;
+  line-height: 1.15;
 }
 
 .ds-heading p {
-  max-width: 330px;
-  margin-top: 8px;
+  max-width: 56ch;
+  margin-top: 6px;
   font-size: 13.5px;
   line-height: 1.5;
   color: var(--ink-500);
 }
 
+.ds-heading-meta {
+  display: grid;
+  flex-shrink: 0;
+  justify-items: end;
+  gap: 6px;
+  max-width: 300px;
+  text-align: right;
+}
+
 .ds-date {
-  display: inline-block;
-  margin-top: 14px;
   font-size: 11px;
   color: var(--ink-500);
   font-variant-numeric: tabular-nums;
 }
 
 .ds-demo {
-  display: block;
-  margin-top: 10px;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.1em;
@@ -837,6 +859,29 @@ button:disabled,
   margin: 12px 18px 0;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--line);
+}
+
+.ds-stats > summary {
+  grid-column: 1 / -1;
+  min-height: 44px;
+  padding: 12px 0;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  cursor: pointer;
+}
+
+.ds-stats > summary:focus-visible {
+  outline: 2px solid var(--agave-600);
+  outline-offset: 2px;
+}
+
+.ds-stats:not([open]) {
+  padding-bottom: 0;
+}
+
+.ds-stats:not([open]) > div {
+  display: none;
 }
 
 .ds-stats > div {
@@ -1697,28 +1742,30 @@ input[type='checkbox'] {
   }
 
   .ds-map-note {
-    position: absolute;
+    top: auto;
     right: 10px;
-    bottom: 10px;
+    bottom: 52px;
     left: 10px;
-    display: block;
-    padding: 6px 8px;
-    border-radius: 8px;
-    background: color-mix(in oklab, var(--sand-50) 86%, transparent);
+    max-width: none;
     font-size: 10px;
-    color: var(--ink-500);
   }
 
   .ds-heading {
-    padding: 18px 16px 0;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px 16px 0;
   }
 
   .ds-heading h1 {
-    font-size: 28px;
+    font-size: 24px;
   }
 
-  .ds-heading p {
-    font-size: 13.5px;
+  .ds-heading-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    max-width: none;
+    text-align: left;
   }
 
   .ds-parcel-card {
@@ -1802,6 +1849,11 @@ input[type='checkbox'] {
   .ds-parcel-grid,
   .ds-inspection-grid {
     grid-template-columns: 1fr;
+  }
+
+  .ds-map-control {
+    width: 44px;
+    height: 44px;
   }
 
   .ds-map-controls {
@@ -1931,7 +1983,7 @@ input[type='checkbox'] {
   }
 
   .ds-heading h1 {
-    font-size: 25px;
+    font-size: 22px;
   }
 }
 

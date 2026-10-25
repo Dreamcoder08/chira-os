@@ -36,7 +36,8 @@ const STEP_DEGREES = 0.009; // ~1 km of latitude
  */
 function framePadding() {
   if (!window.matchMedia('(min-width: 1024px)').matches) {
-    return { top: 56, bottom: 48, left: 56, right: 56 };
+    // Leave room for touch controls, parcel labels and the local-map notice.
+    return { top: 56, bottom: 112, left: 56, right: 120 };
   }
   const dock = document.querySelector('.ds-dock');
   const dockHeight = dock?.getBoundingClientRect().height ?? 0;
@@ -152,6 +153,7 @@ export default function ParcelMap({
 }) {
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
+  const [readyParcels, setReadyParcels] = useState<Parcel[] | null>(null);
   const active = useRef<Parcel | undefined>(undefined);
   active.current = parcels.find((parcel) => parcel.id === activeId);
 
@@ -269,6 +271,7 @@ export default function ParcelMap({
     });
     map.current = instance;
     instance.on('load', () => frame());
+    instance.once('idle', () => setReadyParcels(parcels));
 
     for (const parcel of parcels) {
       const label = document.createElement('span');
@@ -373,6 +376,7 @@ export default function ParcelMap({
         className="ds-map-canvas"
         ref={container}
         aria-label="Mapa de ubicación de parcelas"
+        aria-busy={readyParcels !== parcels}
       />
       <div className="ds-map-scale" aria-hidden>
         <span className="ds-map-scale-bar" style={{ width: scale.width }} />
