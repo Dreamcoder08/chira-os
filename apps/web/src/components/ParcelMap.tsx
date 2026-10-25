@@ -41,7 +41,9 @@ function framePadding() {
   const dock = document.querySelector('.ds-dock');
   const dockHeight = dock?.getBoundingClientRect().height ?? 0;
   return {
-    top: 132,
+    // The console heading is shorter than it was, so the map keeps more of the
+    // vertical band; the right padding still clears the floating parcel card.
+    top: 104,
     bottom: Math.round(dockHeight) + 56,
     left: 132,
     right: 372,

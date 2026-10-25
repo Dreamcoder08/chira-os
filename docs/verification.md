@@ -176,6 +176,36 @@ texto genérico de sesión previa.
 Comprobado: `pnpm check` sale 0 (40 tests unitarios), `pnpm test:e2e` sale 0 con
 10/10 (46,3 s), `pnpm test:integration` sale 0 con 19 tests (2 nuevos de origen).
 
+## Consola: composición y jerarquía (25 de octubre)
+
+- El mapa dejó de ser un fondo. La cabecera pasó de `clamp(28px, 2.8vw, 40px)` a
+  `clamp(24px, 2.1vw, 33px)` con una columna de 430 px (eran 560) y el dock de
+  `min(50vh, 450px)` a `min(44vh, 400px)`. La banda visible del mapa creció unos
+  90 px sin quitarle nada a la lectura.
+- Los controles de zoom y el botón de ubicación estaban anclados abajo a la
+  izquierda con `bottom: calc(min(50vh, 450px) + 34px)`, es decir dentro de la
+  columna del título: se superponían con la fecha y con la nota de demostración.
+  Ahora viven abajo a la derecha, y la barra de escala queda abajo a la izquierda,
+  que es la convención de cualquier mapa.
+- Una sola variable `--dock-height` gobierna el dock, los controles y la escala; el
+  estado plegado la reescribe a 42 px. Antes tres reglas distintas repetían el mismo
+  `calc()` y podían desincronizarse sin que nadie lo notara.
+- El breadcrumb decía `Guardian`, el nombre interno del producto. Ahora dice la
+  vista actual (`Revisión` o `Parcelas`).
+- La identidad del topbar se cortaba en `Coordinadora de demos…` con 160 px de
+  ancho; ahora tiene 190 px y el nombre completo queda en el atributo `title`.
+- Las tarjetas de inspección: la nota se limita a dos líneas con
+  `-webkit-line-clamp` y `overflow-wrap: anywhere`, así una nota larga no empuja la
+  tarjeta fuera de su columna. El `white-space: pre-wrap` solo no alcanzaba.
+- El punto lima junto a `00` envíos pendientes se eliminó: un punto significa «mirá
+  acá» y no había nada que mirar.
+- Medido en 1920×1014 después del cambio: cabecera 64,60–494,300; controles
+  1866,454–1902,580; escala 82,565–168,580; dock 80,598–1904,998 (400 px de alto).
+  Cero superposiciones. La grilla de inspecciones ocupa 99–1885 con cinco columnas
+  de 348 px, y la línea de metadatos mide `scrollWidth === clientWidth`.
+- Comprobado: `pnpm check` sale 0 (40 tests unitarios), `pnpm test:e2e` sale 0 con
+  10/10 en `desktop` y `mobile` (55,5 s), `pnpm test:integration` sale 0 con 19 tests.
+
 ## Pendiente, sin atribuirle un resultado verde
 
 - S3 implementado como adaptador opcional, sin pruebas contra un proveedor real ni despliegue.

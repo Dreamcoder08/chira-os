@@ -358,7 +358,9 @@ export function App() {
             <span className="ds-context-sep" aria-hidden="true">
               /
             </span>
-            <span className="ds-context-page">Guardian</span>
+            <span className="ds-context-page">
+              {view === 'inspecciones' ? 'Revisión' : 'Parcelas'}
+            </span>
           </div>
           <div className="ds-status">
             {profile.memberships.length > 1 && (
@@ -391,7 +393,9 @@ export function App() {
               {online ? 'Con conexión' : 'Sin conexión'}
             </span>
             <span className="ds-chip ds-chip--warn">Demostración</span>
-            <span className="ds-user">{profile.user.name}</span>
+            <span className="ds-user" title={profile.user.name}>
+              {profile.user.name}
+            </span>
             <button
               className="ds-btn ds-btn--ghost"
               onClick={() => void logout()}
@@ -540,7 +544,9 @@ export function App() {
                   <span>ENVÍOS PENDIENTES</span>
                   <strong>
                     {drafts.length.toString().padStart(2, '0')}{' '}
-                    <i className={drafts.length ? 'dot amber' : 'dot'} />
+                    {/* A dot means "look here". With nothing pending it would
+                        read as activity where there is none. */}
+                    {drafts.length > 0 && <i className="dot amber" />}
                   </strong>
                   <small>
                     {drafts.length
