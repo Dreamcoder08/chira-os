@@ -13,6 +13,8 @@ export function loginMessage(error: unknown): string {
     if (error.status === 429)
       return 'Demasiados intentos seguidos. Espera un minuto y vuelve a intentar.';
     if (error.status === 401) return 'Correo o contraseña incorrectos.';
+    if (error.status === 403)
+      return 'Esta dirección no está autorizada para iniciar sesión. Abre la aplicación en la dirección que te dieron.';
     if (error.status >= 500)
       return 'El servidor no respondió bien. Vuelve a intentar en un momento.';
   }

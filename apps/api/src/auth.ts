@@ -3,6 +3,7 @@ import { drizzleAdapter } from '@better-auth/drizzle-adapter';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import type { Pool } from 'pg';
 import * as schema from '../../../packages/data/src/auth-schema.ts';
+import { trustedOrigins } from './origin.ts';
 
 export function makeAuth(pool: Pool, origin: string) {
   const secret = process.env.BETTER_AUTH_SECRET;
@@ -22,7 +23,7 @@ export function makeAuth(pool: Pool, origin: string) {
   return betterAuth({
     secret,
     baseURL: origin,
-    trustedOrigins: [origin],
+    trustedOrigins: trustedOrigins(origin),
     database: drizzleAdapter(drizzle(pool, { schema }), {
       provider: 'pg',
       schema,

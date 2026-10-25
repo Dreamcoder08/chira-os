@@ -145,6 +145,37 @@ propia imagen desde `Dockerfile.db`, derivada de `postgis/postgis:17-3.6-alpine`
 - Comprobado: `pnpm check` 0 (39 tests unitarios), `pnpm test:e2e` 0 con 10/10 en
   `desktop` y `mobile` (49,6 s), `pnpm test:integration` 0 con 17 tests.
 
+## Dirección de acceso y origen (25 de octubre)
+
+El login respondía «No se pudo iniciar sesión. Comprueba la conexión» a un usuario
+con la contraseña correcta. La causa no era la contraseña: `apps/api/src/app.ts`
+comparaba el header `Origin` contra `APP_ORIGIN` byte por byte, así que abrir
+`http://127.0.0.1:5173` en lugar de `http://localhost:5173` recibía 403 en menos de
+un milisegundo, antes de tocar credenciales. better-auth rechazaba igual por su
+`trustedOrigins`.
+
+Ahora `apps/api/src/origin.ts` es el único lugar que decide qué orígenes valen: si
+`APP_ORIGIN` es loopback, sus tres formas (`localhost`, `127.0.0.1`, `[::1]`) son el
+mismo equipo; cualquier otro host o puerto sigue rechazado.
+
+Medido contra el servidor real, con la misma contraseña válida:
+
+| Origin enviado          | Resultado |
+| ----------------------- | --------- |
+| `http://localhost:5173` | 200       |
+| `http://127.0.0.1:5173` | 200       |
+| `http://[::1]:5173`     | 200       |
+| `http://localhost:9999` | 403       |
+| `https://evil.example`  | 403       |
+| sin header `Origin`     | 403       |
+
+El formulario también distingue el 403: «Esta dirección no está autorizada para
+iniciar sesión. Abre la aplicación en la dirección que te dieron.» Antes caía en el
+texto genérico de sesión previa.
+
+Comprobado: `pnpm check` sale 0 (40 tests unitarios), `pnpm test:e2e` sale 0 con
+10/10 (46,3 s), `pnpm test:integration` sale 0 con 19 tests (2 nuevos de origen).
+
 ## Pendiente, sin atribuirle un resultado verde
 
 - S3 implementado como adaptador opcional, sin pruebas contra un proveedor real ni despliegue.

@@ -28,6 +28,7 @@ import {
 import type { Principal, Parcel } from '../../../packages/domain/src/ports.ts';
 import * as S from '../../../packages/contracts/src/schemas.ts';
 import { makeAuth } from './auth.ts';
+import { isTrustedOrigin } from './origin.ts';
 
 const parcelProjection = `id,name,producer_name AS "producerName",crop,hectares::float,ST_AsGeoJSON(location)::json AS location,assigned_to AS "assignedTo"`;
 function webHeaders(request: FastifyRequest) {
@@ -135,7 +136,7 @@ export async function createApp(options: { logger?: boolean } = {}) {
       reply.header('Cache-Control', 'no-store');
       if (
         !['GET', 'HEAD', 'OPTIONS'].includes(request.method) &&
-        request.headers.origin !== origin
+        !isTrustedOrigin(request.headers.origin, origin)
       )
         throw new DomainError('ORIGIN_REJECTED', 403);
     }

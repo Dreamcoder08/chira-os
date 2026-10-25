@@ -24,6 +24,12 @@ describe('login failure message', () => {
     expect(loginMessage(new TypeError('Failed to fetch'))).toMatch(/conexión/i);
   });
 
+  it('says which address to open when the origin was not trusted', () => {
+    // Typing 127.0.0.1 instead of localhost reached the server and got a 403;
+    // "comprueba la conexión" sent the technician to the wrong place.
+    expect(loginMessage(new ApiError(403, 'FORBIDDEN'))).toMatch(/dirección/i);
+  });
+
   it('keeps the stale-session hint for anything it cannot classify', () => {
     expect(loginMessage(new ApiError(418, 'TEAPOT'))).toMatch(/otro usuario/i);
   });
