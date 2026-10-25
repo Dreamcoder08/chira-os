@@ -24,6 +24,7 @@ import { Login } from './components/Login.tsx';
 import { InspectionForm } from './components/InspectionForm.tsx';
 import { InspectionCard } from './components/InspectionCard.tsx';
 import { parcelHistory } from './lib/history.ts';
+import { pendingWork } from './lib/workload.ts';
 import { formatShortDate } from './lib/format.ts';
 import { formatPercent } from './lib/incidence.ts';
 import { ParcelForm } from './components/ParcelForm.tsx';
@@ -309,6 +310,11 @@ export function App() {
   const history = active
     ? parcelHistory(local.data?.inspections ?? [], active.id)
     : [];
+  /*
+   * Pending work reads the same unfiltered mirror as the history: a search box
+   * narrows the view, it never decides what is still owed.
+   */
+  const workload = pendingWork(parcels, drafts, local.data?.inspections ?? []);
   const matches = (search: string, ...values: string[]) =>
     values
       .join(' ')
@@ -694,6 +700,48 @@ export function App() {
                       Registrar parcela
                     </button>
                   </div>
+                  {workload.length > 0 && (
+                    <section
+                      className="ds-workload"
+                      aria-label="Trabajo pendiente"
+                    >
+                      <h3>
+                        Trabajo pendiente{' '}
+                        <span className="ds-count">{workload.length}</span>
+                      </h3>
+                      <ul>
+                        {workload.map((item) => (
+                          <li key={`${item.kind}-${item.parcelId}`}>
+                            <button
+                              type="button"
+                              className="ds-workload-item"
+                              onClick={() => {
+                                // A draft is continued where it lives, in the
+                                // inspections list, not by starting a new form.
+                                if (item.kind === 'draft') {
+                                  setView('inspecciones');
+                                  return;
+                                }
+                                const parcel = parcels.find(
+                                  (candidate) => candidate.id === item.parcelId,
+                                );
+                                if (parcel) setSelected(parcel);
+                              }}
+                            >
+                              <span className="ds-workload-name">
+                                {item.parcelName}
+                              </span>
+                              <span className="ds-workload-state">
+                                {item.kind === 'draft'
+                                  ? 'Borrador sin enviar'
+                                  : 'Sin registrar'}
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  )}
                   <WorkspaceFilters
                     subject="parcelas"
                     search={parcelSearch}

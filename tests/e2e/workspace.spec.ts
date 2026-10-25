@@ -437,3 +437,10 @@ test('shows the recent visits of a parcel with their incidence', async ({
   ).toBeVisible();
   await expect(history.getByText('Enviada', { exact: true })).toBeVisible();
 });
+
+test('does not offer work that is already recorded', async ({ page }) => {
+  // Every fixture parcel already has one inspection, so an empty pending list
+  // is correct here: the panel must not invent work to look busy.
+  await openWorkspace(page);
+  await expect(page.getByLabel('Trabajo pendiente')).toHaveCount(0);
+});

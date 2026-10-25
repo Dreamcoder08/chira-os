@@ -2051,3 +2051,66 @@ input[type='checkbox'] {
     transition-duration: 1ms !important;
   }
 }
+
+/* Pending work sits above the filters: the first thing a technician opens in
+   the morning should be what still needs a visit, not a search box. */
+.ds-workload {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-2, transparent);
+}
+
+.ds-workload h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-500);
+}
+
+.ds-workload ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ds-workload-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ds-workload-item:hover {
+  border-color: var(--ink-500);
+}
+
+.ds-workload-name {
+  font-weight: 600;
+}
+
+.ds-workload-state {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-500);
+  text-align: right;
+}

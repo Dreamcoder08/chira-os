@@ -18,14 +18,33 @@ describe('session plan', () => {
     ).toHaveLength(3);
   });
 
-  it('assigns one parcel per technician, each at its own spot', () => {
+  it('gives each technician three parcels, each at its own spot', () => {
     const plan = buildSessionPlan({ slug: 'oct29', technicians: 3 });
-    expect(plan.parcels).toHaveLength(3);
-    expect(plan.parcels.map((parcel) => parcel.technician)).toEqual([1, 2, 3]);
+    expect(plan.parcels).toHaveLength(9);
+    expect(plan.parcels.map((parcel) => parcel.technician)).toEqual([
+      1, 1, 1, 2, 2, 2, 3, 3, 3,
+    ]);
     const spots = new Set(
       plan.parcels.map((parcel) => `${parcel.longitude},${parcel.latitude}`),
     );
-    expect(spots.size).toBe(3);
+    expect(spots.size).toBe(9);
+  });
+
+  it('honours a smaller or larger number of parcels per phone', () => {
+    expect(
+      buildSessionPlan({
+        slug: 'oct29',
+        technicians: 2,
+        parcelsPerTechnician: 1,
+      }).parcels,
+    ).toHaveLength(2);
+    expect(
+      buildSessionPlan({
+        slug: 'oct29',
+        technicians: 2,
+        parcelsPerTechnician: 5,
+      }).parcels,
+    ).toHaveLength(10);
   });
 
   it('keeps the parcels synthetic so no producer data is loaded', () => {

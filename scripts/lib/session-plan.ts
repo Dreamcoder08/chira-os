@@ -34,6 +34,7 @@ const base = { longitude: -80.65, latitude: -4.84 };
 export function validateSessionInput(input: {
   slug: string;
   technicians: number;
+  parcelsPerTechnician?: number;
 }): string[] {
   const errors: string[] = [];
   if (!/^[a-z0-9][a-z0-9-]{2,39}$/.test(input.slug))
@@ -43,12 +44,21 @@ export function validateSessionInput(input: {
   if (!Number.isInteger(input.technicians) || input.technicians < 1)
     errors.push('--technicians must be a whole number of at least 1');
   if (input.technicians > 8) errors.push('--technicians must be 8 or fewer');
+  // One parcel per technician makes the workspace look empty in a session: the
+  // technician finishes the only record and has nothing left to do. Three gives
+  // a pending list worth walking through without turning the session into data
+  // entry.
+  const perTechnician = input.parcelsPerTechnician ?? 3;
+  if (!Number.isInteger(perTechnician) || perTechnician < 1)
+    errors.push('--parcels must be a whole number of at least 1');
+  if (perTechnician > 6) errors.push('--parcels must be 6 or fewer');
   return errors;
 }
 
 export function buildSessionPlan(input: {
   slug: string;
   technicians: number;
+  parcelsPerTechnician?: number;
 }): SessionPlan {
   const errors = validateSessionInput(input);
   if (errors.length > 0) throw new Error(errors.join('\n'));
@@ -60,23 +70,26 @@ export function buildSessionPlan(input: {
     },
   ];
   const parcels: SessionParcel[] = [];
+  const perTechnician = input.parcelsPerTechnician ?? 3;
   for (let index = 1; index <= input.technicians; index += 1) {
     accounts.push({
       email: `${input.slug}-tec${index}@chira.local`,
       name: `Técnico ${index}`,
       role: 'technician',
     });
-    parcels.push({
-      name: `Lote ${index} · Demostración`,
-      producerName: 'Productor sintético',
-      crop: 'Banano orgánico',
-      hectares: 2.4,
-      // One hundredth of a degree apart, about 1.1 km, so the parcels do not
-      // overlap on the local map.
-      longitude: base.longitude - index * 0.01,
-      latitude: base.latitude + index * 0.01,
-      technician: index,
-    });
+    for (let slot = 1; slot <= perTechnician; slot += 1) {
+      parcels.push({
+        name: `Lote ${index}.${slot} · Demostración`,
+        producerName: 'Productor sintético',
+        crop: 'Banano orgánico',
+        hectares: 2.4,
+        // One hundredth of a degree apart, about 1.1 km, so the parcels do not
+        // overlap on the local map.
+        longitude: base.longitude - (index * perTechnician + slot) * 0.01,
+        latitude: base.latitude + (index * perTechnician + slot) * 0.01,
+        technician: index,
+      });
+    }
   }
   return { accounts, parcels };
 }

@@ -61,6 +61,12 @@ vieja, cada una con su fecha, su incidencia y su estado. Un borrador no aparece:
 enviar en este dispositivo, no evidencia. Si una visita no tiene conteo, se muestra igual y dice
 «sin muestreo», para que el hueco sea visible en vez de desaparecer.
 
+El técnico empieza por **Trabajo pendiente**, no buscando su parcela: la lista reúne los
+borradores sin enviar y las parcelas que todavía no tienen ningún registro enviado, y cada
+elemento lleva a donde hay que continuar. No se llama «hoy» a propósito —un teléfono puede pasar
+días sin conexión y una lista que se vacía a medianoche escondería trabajo que todavía se debe— y
+una parcela ya registrada no se ofrece dos veces.
+
 Parcelas y revisión priorizan las listas, con desplazamiento continuo y navegación
 etiquetada. Un encabezado compacto identifica la tarea y conserva la fecha y el aviso
 de datos sintéticos en escritorio y móvil. Busca localmente por parcela, productor, cultivo u observación; en
