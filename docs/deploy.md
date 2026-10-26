@@ -11,7 +11,14 @@ receipt.
 - CI builds the image (`docker build -t chira-os:local .`), scans it, scans the
   database, and restores a backup on every run.
 - The published image workflow pushes the same Dockerfile to
-  `ghcr.io/dreamcoder08/chira-os`, tagged with the commit and `latest`.
+  `ghcr.io/dreamcoder08/chira-os`, tagged with the commit and `latest`. This is
+  verified by the run log, not assumed: run 40253376237 reported both tags and
+  a digest. Publishing needs the repository default workflow token to be
+  `write`; with the default at `read` the registry answered `denied` even
+  though the workflow asked for `packages: write`. The setting is reversible
+  with `gh api -X PUT .../actions/permissions/workflow -f
+default_workflow_permissions=read`, and because it widens every workflow's
+  token it should be revisited rather than forgotten.
 - The pilot origin serves the built shell over HTTPS with a service worker that
   takes control, verified by `pnpm pilot:check` on a LAN.
 - Integration tests cover tenant isolation with row-level security, immutable
