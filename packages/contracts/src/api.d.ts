@@ -296,6 +296,10 @@ export interface paths {
                             notes: string;
                             biosecurity: boolean;
                             photoIds: string[];
+                            sampling?: {
+                                plantsObserved: number;
+                                plantsAffected: number;
+                            } | null;
                             status: "draft" | "submitted" | "reviewed";
                             version: number;
                             /** Format: date-time */
@@ -339,6 +343,10 @@ export interface paths {
                         notes: string;
                         biosecurity: boolean;
                         photoIds: string[];
+                        sampling?: {
+                            plantsObserved: number;
+                            plantsAffected: number;
+                        } | null;
                         /** Format: date-time */
                         observedAt: string;
                         /** Format: uuid */
@@ -363,6 +371,10 @@ export interface paths {
                             notes: string;
                             biosecurity: boolean;
                             photoIds: string[];
+                            sampling?: {
+                                plantsObserved: number;
+                                plantsAffected: number;
+                            } | null;
                             status: "draft" | "submitted" | "reviewed";
                             version: number;
                             /** Format: date-time */
@@ -422,6 +434,10 @@ export interface paths {
                             notes: string;
                             biosecurity: boolean;
                             photoIds: string[];
+                            sampling?: {
+                                plantsObserved: number;
+                                plantsAffected: number;
+                            } | null;
                             status: "draft" | "submitted" | "reviewed";
                             version: number;
                             /** Format: date-time */
@@ -482,6 +498,10 @@ export interface paths {
                             notes: string;
                             biosecurity: boolean;
                             photoIds: string[];
+                            sampling?: {
+                                plantsObserved: number;
+                                plantsAffected: number;
+                            } | null;
                             status: "draft" | "submitted" | "reviewed";
                             version: number;
                             /** Format: date-time */

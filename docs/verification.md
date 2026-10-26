@@ -206,6 +206,23 @@ Comprobado: `pnpm check` sale 0 (40 tests unitarios), `pnpm test:e2e` sale 0 con
 - Comprobado: `pnpm check` sale 0 (40 tests unitarios), `pnpm test:e2e` sale 0 con
   10/10 en `desktop` y `mobile` (55,5 s), `pnpm test:integration` sale 0 con 19 tests.
 
+## Límite de lectura de fotos (25 de octubre)
+
+- Síntoma en el log del servidor: cada carga de la consola dispara ocho
+  `GET /api/v1/photos/:id` y a partir de la tercera tanda el endpoint responde
+  **429** en 0,4–5,8 ms, mientras `/api/v1/parcels` y `/api/v1/inspections`
+  siguen en 200 y en 20–60 ms. La evidencia de las tarjetas dejaba de dibujarse.
+- Causa: el limitador global es 120 por minuto con clave
+  `ip:método:ruta`, así que `GET /api/v1/photos/:id` tiene su propio balde de 120. La lista tiene 58 inspecciones con fotos y cada visita las vuelve a
+  pedir, de modo que el balde se vacía y todo lo que viene después responde 429.
+- Arreglo: presupuesto por método. Las lecturas suben a 300 y las escrituras
+  se quedan en 120, con la clave por ruta intacta.
+- Comprobado contra el servidor vivo: 150 peticiones seguidas a una foto →
+  **150 respuestas 401 y cero 429**. Con el presupuesto anterior las últimas 30
+  habrían sido 429. El 401 es el guardia de sesión detrás del limitador.
+- `pnpm check` sale 0 (40 tests unitarios), `pnpm test:e2e` sale 0 con 16/16
+  (58,9 s), `pnpm test:integration` sale 0 con 19 tests.
+
 ## Pendiente, sin atribuirle un resultado verde
 
 - S3 implementado como adaptador opcional, sin pruebas contra un proveedor real ni despliegue.

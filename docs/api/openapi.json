@@ -310,6 +310,20 @@
                         "type": "array",
                         "items": { "format": "uuid", "type": "string" }
                       },
+                      "sampling": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": ["plantsObserved", "plantsAffected"],
+                        "properties": {
+                          "plantsObserved": {
+                            "minimum": 1,
+                            "maximum": 500,
+                            "type": "integer"
+                          },
+                          "plantsAffected": { "minimum": 0, "type": "integer" }
+                        },
+                        "nullable": true
+                      },
                       "status": {
                         "anyOf": [
                           { "type": "string", "enum": ["draft"] },
@@ -362,6 +376,20 @@
                     "type": "array",
                     "items": { "format": "uuid", "type": "string" }
                   },
+                  "sampling": {
+                    "additionalProperties": false,
+                    "type": "object",
+                    "required": ["plantsObserved", "plantsAffected"],
+                    "properties": {
+                      "plantsObserved": {
+                        "minimum": 1,
+                        "maximum": 500,
+                        "type": "integer"
+                      },
+                      "plantsAffected": { "minimum": 0, "type": "integer" }
+                    },
+                    "nullable": true
+                  },
                   "observedAt": { "format": "date-time", "type": "string" },
                   "operationId": { "format": "uuid", "type": "string" },
                   "expectedVersion": { "minimum": 0, "type": "integer" }
@@ -412,6 +440,20 @@
                       "uniqueItems": true,
                       "type": "array",
                       "items": { "format": "uuid", "type": "string" }
+                    },
+                    "sampling": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": ["plantsObserved", "plantsAffected"],
+                      "properties": {
+                        "plantsObserved": {
+                          "minimum": 1,
+                          "maximum": 500,
+                          "type": "integer"
+                        },
+                        "plantsAffected": { "minimum": 0, "type": "integer" }
+                      },
+                      "nullable": true
                     },
                     "status": {
                       "anyOf": [
@@ -490,6 +532,20 @@
                       "uniqueItems": true,
                       "type": "array",
                       "items": { "format": "uuid", "type": "string" }
+                    },
+                    "sampling": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": ["plantsObserved", "plantsAffected"],
+                      "properties": {
+                        "plantsObserved": {
+                          "minimum": 1,
+                          "maximum": 500,
+                          "type": "integer"
+                        },
+                        "plantsAffected": { "minimum": 0, "type": "integer" }
+                      },
+                      "nullable": true
                     },
                     "status": {
                       "anyOf": [
@@ -579,6 +635,20 @@
                       "uniqueItems": true,
                       "type": "array",
                       "items": { "format": "uuid", "type": "string" }
+                    },
+                    "sampling": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": ["plantsObserved", "plantsAffected"],
+                      "properties": {
+                        "plantsObserved": {
+                          "minimum": 1,
+                          "maximum": 500,
+                          "type": "integer"
+                        },
+                        "plantsAffected": { "minimum": 0, "type": "integer" }
+                      },
+                      "nullable": true
                     },
                     "status": {
                       "anyOf": [

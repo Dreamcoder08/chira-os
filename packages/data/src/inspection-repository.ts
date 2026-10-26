@@ -5,22 +5,40 @@ import type {
   Principal,
 } from '../../domain/src/ports.ts';
 
+type InspectionRow = Omit<Inspection, 'sampling'> & {
+  plantsObserved: number | null;
+  plantsAffected: number | null;
+};
+
+// The columns are flat in SQL and a single nullable object in the domain, so
+// rows written before sampling existed read back as "not measured".
+function withSampling(row: InspectionRow): Inspection {
+  const { plantsObserved, plantsAffected, ...rest } = row;
+  return {
+    ...rest,
+    sampling:
+      plantsObserved === null || plantsAffected === null
+        ? null
+        : { plantsObserved, plantsAffected },
+  };
+}
+
 export class PostgresInspectionRepository implements InspectionRepository {
   constructor(
     private readonly client: PoolClient,
     private readonly principal: Principal,
   ) {}
   async find(id: string) {
-    const result = await this.client.query<Inspection>(
-      `SELECT id,parcel_id AS "parcelId",author_id AS "authorId",notes,biosecurity,photo_ids AS "photoIds",status,version,to_char(observed_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "observedAt" FROM inspections WHERE id=$1 FOR UPDATE`,
+    const result = await this.client.query<InspectionRow>(
+      `SELECT id,parcel_id AS "parcelId",author_id AS "authorId",notes,biosecurity,photo_ids AS "photoIds",plants_observed AS "plantsObserved",plants_affected AS "plantsAffected",status,version,to_char(observed_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "observedAt" FROM inspections WHERE id=$1 FOR UPDATE`,
       [id],
     );
-    return result.rows[0];
+    return result.rows[0] && withSampling(result.rows[0]);
   }
   async save(value: Inspection) {
     const result = await this.client.query(
-      `INSERT INTO inspections(id,association_id,parcel_id,author_id,notes,biosecurity,photo_ids,status,version,observed_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-      ON CONFLICT(id) DO UPDATE SET notes=EXCLUDED.notes,biosecurity=EXCLUDED.biosecurity,photo_ids=EXCLUDED.photo_ids,status=EXCLUDED.status,version=EXCLUDED.version,updated_at=now()
+      `INSERT INTO inspections(id,association_id,parcel_id,author_id,notes,biosecurity,photo_ids,plants_observed,plants_affected,status,version,observed_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+      ON CONFLICT(id) DO UPDATE SET notes=EXCLUDED.notes,biosecurity=EXCLUDED.biosecurity,photo_ids=EXCLUDED.photo_ids,plants_observed=EXCLUDED.plants_observed,plants_affected=EXCLUDED.plants_affected,status=EXCLUDED.status,version=EXCLUDED.version,updated_at=now()
       WHERE inspections.version=EXCLUDED.version-1 AND inspections.author_id=EXCLUDED.author_id AND inspections.parcel_id=EXCLUDED.parcel_id`,
       [
         value.id,
@@ -30,6 +48,8 @@ export class PostgresInspectionRepository implements InspectionRepository {
         value.notes,
         value.biosecurity,
         value.photoIds,
+        value.sampling?.plantsObserved ?? null,
+        value.sampling?.plantsAffected ?? null,
         value.status,
         value.version,
         value.observedAt,

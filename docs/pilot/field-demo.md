@@ -153,7 +153,10 @@ Si algo falla, el comando termina con código 1 y dice cuál comprobación fall�
 
 Con el teléfono conectado a la misma red:
 
-1. Abrir `https://192.168.1.17:8443` y entrar con la cuenta del técnico.
+1. Abrir `https://<IP-de-esta-máquina>:8443` y entrar con la cuenta del técnico.
+   La IP no se adivina: `pnpm pilot:check` la imprime en la primera línea. Si el
+   router la cambió, hay que recrear el proxy con `PILOT_HOST` y repetir la
+   comprobación, porque el certificado está atado a esa dirección.
 2. Pulsar **Preparar trabajo offline**. Aparecen las parcelas disponibles y se
    descargan para trabajar sin señal.
 3. Activar el modo avión. La aplicación muestra **Sin conexión**.

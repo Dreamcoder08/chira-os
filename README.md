@@ -50,13 +50,49 @@ servidor sigue guardando WebP de 2048 px. El detalle y las mediciones están en
 
 ## Interfaz
 
-El escritorio es una consola con el mapa al centro: rail de iconos, tarjeta de
-parcela sobre el mapa y un panel inferior plegable con métricas y pestañas. En el
-teléfono la aplicación se comporta como una app: barra inferior, hojas que suben
-desde abajo y el mapa a pantalla completa. La cartografía es local —grilla de un
-kilómetro, parcelas y escala—, sin tiles ni pedidos a terceros, porque el piloto
-corre en una red local sin internet. El detalle de tokens, componentes y reglas
-está en `docs/superpowers/specs/2026-10-24-design-system-design.md`.
+Cada inspección registra un **muestreo** además de las observaciones: cuántas plantas se
+evaluaron y cuántas mostraban síntomas. La incidencia se calcula a partir de esos dos números y
+se muestra en la ficha; un registro sin conteo sigue siendo válido y se lee como «sin muestreo
+registrado». El conteo es una observación del técnico, no un diagnóstico: nada en la aplicación
+afirma que una fotografía confirme una enfermedad.
+
+La ficha de una parcela muestra su **historial**: las últimas visitas, de la más nueva a la más
+vieja, cada una con su fecha, su incidencia y su estado. Un borrador no aparece: es trabajo sin
+enviar en este dispositivo, no evidencia. Si una visita no tiene conteo, se muestra igual y dice
+«sin muestreo», para que el hueco sea visible en vez de desaparecer.
+
+El técnico empieza por **Trabajo pendiente**, no buscando su parcela: la lista reúne los
+borradores sin enviar y las parcelas que todavía no tienen ningún registro enviado, y cada
+elemento lleva a donde hay que continuar. No se llama «hoy» a propósito —un teléfono puede pasar
+días sin conexión y una lista que se vacía a medianoche escondería trabajo que todavía se debe— y
+una parcela ya registrada no se ofrece dos veces.
+
+Parcelas y revisión priorizan las listas, con desplazamiento continuo y navegación
+etiquetada. Un encabezado compacto identifica la tarea y conserva la fecha y el aviso
+de datos sintéticos en escritorio y móvil. Busca localmente por parcela, productor, cultivo u observación; en
+inspecciones también puedes filtrar por estado y limpiar los filtros. Los contadores
+separan los envíos en este dispositivo, los registros por revisar y los revisados.
+**Con conexión no significa sincronizado**: los pendientes locales siguen visibles.
+Las estadísticas secundarias se consultan en **Resumen del equipo**, desplegable con
+teclado; el estado de pendientes y las acciones de sincronización permanecen fuera
+del desplegable.
+
+El mapa se carga solo al abrir **Mapa** o **Ver parcela en el mapa**. La cartografía
+es local —grilla de un kilómetro, parcelas y escala—, sin tiles ni pedidos a terceros.
+La aclaración de cartografía local permanece visible en escritorio y móvil, sin tapar
+la escala. Los controles del mapa tienen un área de 44 × 44 px en el teléfono y el
+encuadre reserva espacio para que no tapen las etiquetas. El estado accesible de carga
+termina al completar la carga y el encuadre inicial. El panel de trabajo se oculta en
+el mapa y vuelve al regresar a las listas.
+En el teléfono se conserva la barra inferior y los formularios en hojas con foco
+contenido y cierre mediante Escape. Las acciones de registro, revisión y exportación
+mantienen sus permisos y flujos existentes.
+
+Desde el mapa, la ficha de una parcela ofrece **Ver reporte**: una página con la identidad de la
+parcela, el total de visitas, la incidencia actual, la tendencia frente a la visita anterior y el
+detalle de las últimas visitas. Se imprime o se guarda como PDF desde el navegador, para que el
+coordinador tenga algo que entregar en una reunión. La página declara lo mismo que la aplicación:
+un conteo de plantas observadas no confirma una enfermedad.
 
 ## Piloto de campo en teléfonos
 
@@ -65,11 +101,19 @@ compilado por HTTPS en la red local, con una autoridad certificadora propia, y d
 escuchando solo en `127.0.0.1:3001`:
 
 ```bash
-pnpm build
-APP_ORIGIN=https://<IP-LOCAL>:8443 pnpm start
-PILOT_HOST=<IP-LOCAL> docker compose --profile pilot up -d proxy
+pnpm pilot:up
 PILOT_HOST=<IP-LOCAL> pnpm pilot:check
 ```
+
+`pnpm pilot:up` toma la dirección de la red local, reinicia la API con ese origen, recrea el proxy
+con la misma IP, exporta el certificado raíz a `.local/pki/root.crt` y no termina hasta que el
+origen responde. La IP cambia sola con el DHCP y el certificado está atado a ella: ese paso manual
+ya rompió dos ensayos de sesión. `PILOT_HOST=<IP>` fuerza una dirección concreta.
+
+Para preparar una sesión completa —coordinador, un técnico por teléfono y una parcela sintética
+asignada a cada uno— está `pnpm pilot:session --slug <nombre> --technicians <n>`, que imprime las
+contraseñas una sola vez. `pnpm user:create` crea una cuenta suelta y **no** crea parcelas: un
+técnico provisionado así entra a un espacio vacío y no puede registrar nada.
 
 Las cuentas del piloto se crean desde la terminal con `pnpm user:create`; no hay autorregistro, y
 `pnpm user:password` reemplaza la contraseña de una cuenta existente cuando alguien la olvida.
@@ -126,7 +170,18 @@ pnpm run sbom
 pnpm security:scan
 ```
 
-Las pruebas de integración y navegador usan los usuarios sintéticos y revocan sus sesiones.
+Para comprobar solo la interfaz sin base de datos, credenciales ni archivos de entorno:
+
+```bash
+pnpm exec playwright test --config playwright.workspace.config.ts
+```
+
+Esta suite abre Vite en `127.0.0.1:5187`, intercepta la API con datos sintéticos y usa
+almacenamiento efímero por caso. Comprueba listas, filtros, navegación, captura local
+y entradas a formularios/revisión en escritorio y móvil; no prueba autorización del
+servidor ni sustituye la suite integrada.
+
+Las pruebas de integración y navegador de la configuración predeterminada usan los usuarios sintéticos y revocan sus sesiones.
 Ejecuta esas suites **secuencialmente**, sin un usuario trabajando en la demo. No las ejecutes
 contra bases con información real. Playwright requiere `pnpm exec playwright install chromium`;
 algunas distribuciones también necesitan `pnpm exec playwright install --with-deps chromium`.

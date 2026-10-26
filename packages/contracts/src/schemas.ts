@@ -20,6 +20,13 @@ export const ParcelSchema = Type.Object(
   { additionalProperties: false },
 );
 export const CreateParcelSchema = Type.Omit(ParcelSchema, ['id', 'assignedTo']);
+export const SamplingSchema = Type.Object(
+  {
+    plantsObserved: Type.Integer({ minimum: 1, maximum: 500 }),
+    plantsAffected: Type.Integer({ minimum: 0 }),
+  },
+  { additionalProperties: false },
+);
 export const InspectionSchema = Type.Object(
   {
     id: Id,
@@ -28,6 +35,7 @@ export const InspectionSchema = Type.Object(
     notes: Type.String({ minLength: 1, maxLength: 5000 }),
     biosecurity: Type.Boolean(),
     photoIds: Type.Array(Id, { maxItems: 5, uniqueItems: true }),
+    sampling: Type.Optional(Type.Union([SamplingSchema, Type.Null()])),
     status: Type.Union([
       Type.Literal('draft'),
       Type.Literal('submitted'),

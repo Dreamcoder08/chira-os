@@ -1,4 +1,7 @@
 export type Role = 'technician' | 'coordinator';
+// What the technician counted, never what it means: incidence is derived and
+// displayed, but the record must not claim a diagnosis.
+export type Sampling = { plantsObserved: number; plantsAffected: number };
 export type Inspection = {
   id: string;
   parcelId: string;
@@ -6,10 +9,16 @@ export type Inspection = {
   notes: string;
   biosecurity: boolean;
   photoIds: string[];
+  sampling: Sampling | null;
   status: 'draft' | 'submitted' | 'reviewed';
   version: number;
   observedAt: string;
 };
+
+export function incidence(sampling: Sampling | null): number | null {
+  if (!sampling) return null;
+  return sampling.plantsAffected / sampling.plantsObserved;
+}
 
 export class DomainError extends Error {
   constructor(
@@ -21,6 +30,18 @@ export class DomainError extends Error {
 }
 function checkVersion(actual: number, expected: number) {
   if (actual !== expected) throw new DomainError('VERSION_CONFLICT', 409);
+}
+// The counts must describe one visit to one parcel: whole plants, a bounded
+// sample, and never more affected plants than observed ones.
+function checkSampling(sampling: Sampling | null): void {
+  if (!sampling) return;
+  const { plantsObserved, plantsAffected } = sampling;
+  if (!Number.isInteger(plantsObserved) || !Number.isInteger(plantsAffected))
+    throw new DomainError('INVALID_SAMPLING');
+  if (plantsObserved < 1 || plantsObserved > 500)
+    throw new DomainError('INVALID_SAMPLING');
+  if (plantsAffected < 0 || plantsAffected > plantsObserved)
+    throw new DomainError('INVALID_SAMPLING');
 }
 export function editInspection(
   previous: Inspection | undefined,
@@ -42,6 +63,7 @@ export function editInspection(
     new Set(input.photoIds).size !== input.photoIds.length
   )
     throw new DomainError('INVALID_INSPECTION');
+  checkSampling(input.sampling);
   if (
     previous &&
     (input.parcelId !== previous.parcelId || input.id !== previous.id)
@@ -51,6 +73,7 @@ export function editInspection(
     ...input,
     authorId: actor,
     notes: input.notes.trim(),
+    sampling: input.sampling ?? null,
     status: 'draft',
     version: expectedVersion + 1,
   };

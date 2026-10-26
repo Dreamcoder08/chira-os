@@ -346,7 +346,7 @@ button:disabled,
 
 .ds-shell {
   display: grid;
-  grid-template-columns: 64px minmax(0, 1fr);
+  grid-template-columns: 168px minmax(0, 1fr);
   height: 100dvh;
   background: var(--canvas);
 }
@@ -382,10 +382,13 @@ button:disabled,
 }
 
 .ds-rail-item {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 144px;
+  min-height: 44px;
+  padding: 8px 12px;
+  font-size: 12px;
   border-radius: var(--radius-1);
   color: var(--ink-300);
   transition:
@@ -428,6 +431,7 @@ button:disabled,
   display: grid;
   grid-template-rows: 60px minmax(0, 1fr);
   min-width: 0;
+  min-height: 0;
 }
 
 /* -------------------------------------------------------------- topbar */
@@ -498,14 +502,21 @@ button:disabled,
 /* --------------------------------------------------------------- stage */
 
 .ds-stage {
-  /* One number drives the dock, the map controls and the scale bar, so the
-     three can never drift apart again. */
-  --dock-height: min(44vh, 400px);
+  --dock-height: 0px;
   position: relative;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.ds-stage[data-view='mapa'] {
   overflow: hidden;
+}
+
+.ds-stage[data-view='mapa'] .ds-heading {
+  display: none;
 }
 
 .ds-map {
@@ -620,45 +631,67 @@ button:disabled,
 }
 
 .ds-map-note {
-  display: none;
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 2;
+  max-width: 300px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-1);
+  background: color-mix(in oklab, var(--sand-50) 92%, transparent);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink-500);
+  pointer-events: none;
 }
 
 .ds-heading {
   position: relative;
   z-index: 1;
-  max-width: 430px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 24px;
   padding: 22px 26px 0;
-  /* The map stays draggable behind the title. */
-  pointer-events: none;
+}
+
+.ds-heading-copy {
+  min-width: 0;
 }
 
 .ds-heading h1 {
-  margin-top: 10px;
-  font-size: clamp(24px, 2.1vw, 33px);
+  margin: 0;
+  font-size: clamp(22px, 2.1vw, 28px);
   font-weight: 560;
   letter-spacing: -0.03em;
-  line-height: 1.08;
+  line-height: 1.15;
 }
 
 .ds-heading p {
-  max-width: 330px;
-  margin-top: 8px;
+  max-width: 56ch;
+  margin-top: 6px;
   font-size: 13.5px;
   line-height: 1.5;
   color: var(--ink-500);
 }
 
+.ds-heading-meta {
+  display: grid;
+  flex-shrink: 0;
+  justify-items: end;
+  gap: 6px;
+  max-width: 300px;
+  text-align: right;
+}
+
 .ds-date {
-  display: inline-block;
-  margin-top: 14px;
   font-size: 11px;
   color: var(--ink-500);
   font-variant-numeric: tabular-nums;
 }
 
 .ds-demo {
-  display: block;
-  margin-top: 10px;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.1em;
@@ -726,6 +759,62 @@ button:disabled,
   font-variant-numeric: tabular-nums;
 }
 
+.ds-parcel-history {
+  display: grid;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.ds-parcel-history h3 {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-500);
+}
+
+.ds-parcel-history ol {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ds-parcel-history li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+}
+
+.ds-history-date {
+  color: var(--ink-500);
+  font-variant-numeric: tabular-nums;
+}
+
+.ds-history-value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.ds-history-detail,
+.ds-history-empty {
+  font-size: 11px;
+  color: var(--ink-500);
+}
+
+.ds-history-status {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-500);
+  text-align: right;
+}
+
 /* ---------------------------------------------------------------- dock */
 
 .ds-dock {
@@ -733,9 +822,9 @@ button:disabled,
   z-index: 2;
   display: flex;
   flex-direction: column;
-  height: var(--dock-height);
-  margin: auto 16px 16px;
-  overflow: hidden;
+  flex-shrink: 0;
+  margin: 18px 16px 16px;
+  padding-top: 16px;
   border: 1px solid var(--line);
   border-radius: var(--radius-3);
   background: color-mix(in oklab, var(--sand-50) 90%, transparent);
@@ -772,10 +861,7 @@ button:disabled,
 }
 
 .ds-dock-body {
-  display: grid;
-  flex: 1;
-  grid-template-rows: auto auto auto minmax(0, 1fr);
-  min-height: 0;
+  display: block;
 }
 
 /* ------------------------------------------------------------ sync strip */
@@ -829,6 +915,29 @@ button:disabled,
   margin: 12px 18px 0;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--line);
+}
+
+.ds-stats > summary {
+  grid-column: 1 / -1;
+  min-height: 44px;
+  padding: 12px 0;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  cursor: pointer;
+}
+
+.ds-stats > summary:focus-visible {
+  outline: 2px solid var(--agave-600);
+  outline-offset: 2px;
+}
+
+.ds-stats:not([open]) {
+  padding-bottom: 0;
+}
+
+.ds-stats:not([open]) > div {
+  display: none;
 }
 
 .ds-stats > div {
@@ -938,9 +1047,39 @@ button:disabled,
 .ds-dock-scroll {
   min-height: 0;
   padding: 0 18px 18px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
+}
+
+.ds-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+}
+
+.ds-filters label {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.ds-results {
+  margin: 12px 0;
+  color: var(--ink-500);
+  font-size: 12px;
+}
+
+.ds-queue {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ds-parcel-tile,
+.inspection-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .ds-section-head {
@@ -1654,40 +1793,43 @@ input[type='checkbox'] {
   .ds-stage:has(.ds-map[data-visible='true']) .ds-heading,
   .ds-stage:has(.ds-map[data-visible='true']) .ds-dock,
   .ds-stage:has(.ds-map[data-visible='true']) .ds-export,
-  .ds-stage:has(.ds-map[data-visible='true']) .ds-footer,
-  .ds-stage:has(.ds-map[data-visible='true']) .ds-parcel-card {
+  .ds-stage:has(.ds-map[data-visible='true']) .ds-footer {
     display: none;
   }
 
   .ds-map-note {
-    position: absolute;
+    top: auto;
     right: 10px;
-    bottom: 10px;
+    bottom: 52px;
     left: 10px;
-    display: block;
-    padding: 6px 8px;
-    border-radius: 8px;
-    background: color-mix(in oklab, var(--sand-50) 86%, transparent);
+    max-width: none;
     font-size: 10px;
-    color: var(--ink-500);
   }
 
   .ds-heading {
-    padding: 18px 16px 0;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px 16px 0;
   }
 
   .ds-heading h1 {
-    font-size: 28px;
+    font-size: 24px;
   }
 
-  .ds-heading p {
-    font-size: 13.5px;
+  .ds-heading-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    max-width: none;
+    text-align: left;
   }
 
   .ds-parcel-card {
-    position: static;
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    left: 16px;
     width: auto;
-    margin: 14px 16px 0;
   }
 
   .ds-dock {
@@ -1763,6 +1905,11 @@ input[type='checkbox'] {
   .ds-parcel-grid,
   .ds-inspection-grid {
     grid-template-columns: 1fr;
+  }
+
+  .ds-map-control {
+    width: 44px;
+    height: 44px;
   }
 
   .ds-map-controls {
@@ -1892,7 +2039,7 @@ input[type='checkbox'] {
   }
 
   .ds-heading h1 {
-    font-size: 25px;
+    font-size: 22px;
   }
 }
 
@@ -1902,5 +2049,210 @@ input[type='checkbox'] {
   *::after {
     animation-duration: 1ms !important;
     transition-duration: 1ms !important;
+  }
+}
+
+/* Pending work sits above the filters: the first thing a technician opens in
+   the morning should be what still needs a visit, not a search box. */
+.ds-workload {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-2, transparent);
+}
+
+.ds-workload h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-500);
+}
+
+.ds-workload ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ds-workload-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ds-workload-item:hover {
+  border-color: var(--ink-500);
+}
+
+.ds-workload-name {
+  font-weight: 600;
+}
+
+.ds-workload-state {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-500);
+  text-align: right;
+}
+
+/* One-page parcel report. It is read on screen once and printed many times,
+   so the screen version stays quiet and the print rules do the heavy lifting. */
+.ds-report {
+  display: grid;
+  gap: 20px;
+  max-width: 720px;
+  padding: 20px 16px;
+}
+
+.ds-report-head h2 {
+  margin: 4px 0 6px;
+  font-size: 22px;
+}
+
+.ds-report-brand {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-500);
+}
+
+.ds-report-meta {
+  margin: 2px 0;
+  font-size: 13px;
+  color: var(--ink-700);
+}
+
+.ds-report-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.ds-report-label {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-500);
+}
+
+.ds-report-summary strong {
+  font-size: 15px;
+}
+
+.ds-report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ds-report-table caption {
+  padding-bottom: 6px;
+  text-align: left;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-500);
+}
+
+.ds-report-table th,
+.ds-report-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+.ds-report-table th {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-500);
+}
+
+.ds-report-notes h3 {
+  margin: 0 0 4px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-500);
+}
+
+.ds-report-notes p,
+.ds-report-empty {
+  margin: 0;
+  font-size: 13px;
+  white-space: pre-wrap;
+}
+
+.ds-report-foot p {
+  margin: 0 0 4px;
+  font-size: 11px;
+  color: var(--ink-500);
+}
+
+.ds-report-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Printing: hide everything, then show only the report. Hiding by visibility
+   keeps the engine from re-laying out the whole workspace, which is what makes
+   this survive unrelated layout changes. */
+@media print {
+  @page {
+    margin: 16mm;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .ds-report,
+  .ds-report * {
+    visibility: visible;
+  }
+
+  .ds-report {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    max-width: none;
+    padding: 0;
+    color: #000;
+  }
+
+  .ds-report-actions {
+    display: none;
+  }
+
+  .ds-report-table th,
+  .ds-report-table td {
+    border-bottom: 1px solid #ccc;
   }
 }

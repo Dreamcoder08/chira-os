@@ -23,15 +23,21 @@ import { ApiError, request } from './lib/api.ts';
 import { Login } from './components/Login.tsx';
 import { InspectionForm } from './components/InspectionForm.tsx';
 import { InspectionCard } from './components/InspectionCard.tsx';
+import { parcelHistory } from './lib/history.ts';
+import { pendingWork } from './lib/workload.ts';
+import { formatShortDate } from './lib/format.ts';
+import { formatPercent } from './lib/incidence.ts';
 import { ParcelForm } from './components/ParcelForm.tsx';
+import { ParcelReport } from './components/ParcelReport.tsx';
 import {
   finishLogout,
   logoutPending,
   markLogoutPending,
 } from './lib/logout.ts';
 import { Icon } from './components/icons.tsx';
+import { WorkspaceFilters } from './components/WorkspaceFilters.tsx';
 
-type View = 'parcelas' | 'mapa' | 'inspecciones';
+type View = 'parcelas' | 'mapa' | 'inspecciones' | 'reporte';
 
 const ParcelMap = lazy(() => import('./components/ParcelMap.tsx'));
 export function App() {
@@ -45,7 +51,9 @@ export function App() {
   const [createParcel, setCreateParcel] = useState(false);
   const [view, setView] = useState<View>('parcelas');
   const [active, setActive] = useState<Parcel | null>(null);
-  const [dockOpen, setDockOpen] = useState(true);
+  const [parcelSearch, setParcelSearch] = useState('');
+  const [inspectionSearch, setInspectionSearch] = useState('');
+  const [inspectionStatus, setInspectionStatus] = useState('all');
   const queryClient = useQueryClient();
   // A toast that never leaves ends up covering the work it announces.
   useEffect(() => {
@@ -296,6 +304,46 @@ export function App() {
   );
   const name = (id: string) =>
     parcels.find((p) => p.id === id)?.name ?? 'Parcela de la asociación';
+  /*
+   * History reads the unfiltered mirror on purpose: the search box narrows what
+   * the technician is looking at, it does not decide what happened in a parcel.
+   */
+  const history = active
+    ? parcelHistory(local.data?.inspections ?? [], active.id)
+    : [];
+  /*
+   * Pending work reads the same unfiltered mirror as the history: a search box
+   * narrows the view, it never decides what is still owed.
+   */
+  const workload = pendingWork(parcels, drafts, local.data?.inspections ?? []);
+  const matches = (search: string, ...values: string[]) =>
+    values
+      .join(' ')
+      .toLocaleLowerCase('es')
+      .includes(search.trim().toLocaleLowerCase('es'));
+  const parcelMatches = (id: string, search: string, notes = '') => {
+    const parcel = parcels.find((item) => item.id === id);
+    return matches(
+      search,
+      parcel?.name ?? '',
+      parcel?.producerName ?? '',
+      parcel?.crop ?? '',
+      notes,
+    );
+  };
+  const visibleParcels = parcels.filter((parcel) =>
+    parcelMatches(parcel.id, parcelSearch),
+  );
+  const visibleDrafts = drafts.filter(
+    (draft) =>
+      (inspectionStatus === 'all' || inspectionStatus === 'pending') &&
+      parcelMatches(draft.parcelId, inspectionSearch, draft.notes),
+  );
+  const visibleInspections = inspections.filter(
+    (inspection) =>
+      (inspectionStatus === 'all' || inspectionStatus === inspection.status) &&
+      parcelMatches(inspection.parcelId, inspectionSearch, inspection.notes),
+  );
   const initials = profile.user.name
     .split(' ')
     .slice(0, 2)
@@ -320,6 +368,7 @@ export function App() {
             onClick={() => setView('parcelas')}
           >
             <Icon name="parcels" />
+            <span>Mis parcelas</span>
           </a>
           <a
             className="ds-rail-item"
@@ -330,6 +379,16 @@ export function App() {
             onClick={() => setView('inspecciones')}
           >
             <Icon name="inspections" />
+            <span>Inspecciones</span>
+          </a>
+          <a
+            className="ds-rail-item"
+            href="#mapa"
+            aria-current={view === 'mapa' ? 'page' : undefined}
+            onClick={() => setView('mapa')}
+          >
+            <Icon name="map" />
+            <span>Mapa</span>
           </a>
           {isCoordinator && (
             <a
@@ -337,8 +396,10 @@ export function App() {
               href="#exportar"
               title="Exportar"
               aria-label="Exportar"
+              onClick={() => setView('inspecciones')}
             >
               <Icon name="export" />
+              <span>Exportar</span>
             </a>
           )}
         </nav>
@@ -359,7 +420,13 @@ export function App() {
               /
             </span>
             <span className="ds-context-page">
-              {view === 'inspecciones' ? 'Revisión' : 'Parcelas'}
+              {view === 'mapa'
+                ? 'Mapa'
+                : view === 'inspecciones'
+                  ? 'Revisión'
+                  : view === 'reporte'
+                    ? 'Reporte'
+                    : 'Parcelas'}
             </span>
           </div>
           <div className="ds-status">
@@ -410,44 +477,51 @@ export function App() {
             {notice}
           </div>
         )}
-        <main className="ds-stage">
-          <div className="ds-map" data-visible={view === 'mapa'}>
-            <Suspense
-              fallback={<p className="ds-map-loading">Cargando mapa…</p>}
-            >
-              <ParcelMap parcels={parcels} activeId={active?.id} />
-            </Suspense>
-            <p className="ds-map-note">
-              Referencia geográfica local. No incluye imágenes satelitales ni
-              cartografía base.
-            </p>
-          </div>
+        <main className="ds-stage" data-view={view}>
+          {view === 'mapa' && (
+            <div id="mapa" className="ds-map" data-visible="true">
+              <Suspense
+                fallback={<p className="ds-map-loading">Cargando mapa…</p>}
+              >
+                <ParcelMap parcels={parcels} activeId={active?.id} />
+              </Suspense>
+              <p className="ds-map-note">
+                Referencia geográfica local. No incluye imágenes satelitales ni
+                cartografía base.
+              </p>
+            </div>
+          )}
           <section className="ds-heading" aria-labelledby="ds-title">
-            <span className="ds-eyebrow">
-              CAMPO CONECTADO, INCLUSO SIN SEÑAL
-            </span>
-            <h1 id="ds-title">
-              {isCoordinator
-                ? 'Una mirada a tu asociación.'
-                : 'Cada visita cuenta.'}
-            </h1>
-            <p>
-              {isCoordinator
-                ? 'Revisa la evidencia y acompaña las decisiones de tu equipo.'
-                : 'Registra lo que ves hoy. Protege lo que crece mañana.'}
-            </p>
-            <span className="ds-date">
-              {new Date().toLocaleDateString('es-PE', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              })}
-            </span>
-            <span className="ds-demo">
-              Demostración · datos sintéticos · sin diagnóstico automático
-            </span>
+            <div className="ds-heading-copy">
+              <h1 id="ds-title">
+                {view === 'parcelas'
+                  ? 'Parcelas de tu equipo'
+                  : isCoordinator
+                    ? 'Revisión de campo'
+                    : 'Inspecciones de campo'}
+              </h1>
+              <p>
+                {view === 'parcelas'
+                  ? 'Consulta tus parcelas, prepara una visita o registra una inspección.'
+                  : isCoordinator
+                    ? 'Revisa las observaciones y la evidencia recogida por tu equipo.'
+                    : 'Consulta tus visitas y los envíos guardados en este dispositivo.'}
+              </p>
+            </div>
+            <div className="ds-heading-meta">
+              <span className="ds-date">
+                {new Date().toLocaleDateString('es-PE', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })}
+              </span>
+              <span className="ds-demo">
+                Demostración · datos sintéticos · sin diagnóstico automático
+              </span>
+            </div>
           </section>
-          {active && (
+          {active && view === 'mapa' && (
             <article className="ds-parcel-card">
               <button
                 className="ds-icon-btn"
@@ -478,6 +552,46 @@ export function App() {
                   </dd>
                 </div>
               </dl>
+              <section
+                className="ds-parcel-history"
+                aria-label="Historial de la parcela"
+              >
+                <h3>Historial</h3>
+                {history.length === 0 ? (
+                  <p className="ds-history-empty">
+                    Sin inspecciones registradas.
+                  </p>
+                ) : (
+                  <ol>
+                    {history.map((entry) => (
+                      <li key={entry.id}>
+                        <span className="ds-history-date">
+                          {formatShortDate(entry.observedAt)}
+                        </span>
+                        <span className="ds-history-value">
+                          {entry.ratio === null
+                            ? 'Sin muestreo'
+                            : `Incidencia ${formatPercent(entry.ratio)}`}
+                        </span>
+                        <span className="ds-history-detail">
+                          {entry.ratio === null
+                            ? 'Sin conteo de plantas'
+                            : `${entry.plantsAffected} de ${entry.plantsObserved} plantas`}
+                        </span>
+                        <span className="ds-history-status">
+                          {entry.status === 'reviewed' ? 'Revisada' : 'Enviada'}
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </section>
+              <button
+                className="ds-btn ds-btn--secondary"
+                onClick={() => setView('reporte')}
+              >
+                Ver reporte
+              </button>
               <button
                 className="ds-btn ds-btn--primary"
                 onClick={() => {
@@ -489,19 +603,15 @@ export function App() {
               </button>
             </article>
           )}
-          <section className="ds-dock" data-open={dockOpen}>
-            <button
-              className="ds-dock-handle"
-              onClick={() => setDockOpen((value) => !value)}
-              aria-expanded={dockOpen}
-              aria-label={dockOpen ? 'Contraer panel' : 'Expandir panel'}
-            >
-              <Icon name={dockOpen ? 'chevronDown' : 'chevronUp'} size={16} />
-            </button>
+          <section className="ds-dock" hidden={view === 'mapa'}>
             <div className="ds-dock-body">
               <div className="ds-sync">
                 <div className="ds-sync-copy">
-                  <strong>Tu trabajo sigue, con o sin conexión.</strong>
+                  <strong role="status">
+                    {drafts.length
+                      ? `${drafts.length} envío${drafts.length === 1 ? '' : 's'} pendiente${drafts.length === 1 ? '' : 's'} en este dispositivo`
+                      : 'Sin envíos locales pendientes'}
+                  </strong>
                   <p>
                     Prepara tus parcelas antes de salir. Los envíos pendientes
                     se reintentan al volver la señal.
@@ -524,7 +634,8 @@ export function App() {
                   </button>
                 </div>
               </div>
-              <div className="ds-stats">
+              <details className="ds-stats" aria-label="Resumen del equipo">
+                <summary>Resumen del equipo</summary>
                 <div>
                   <span>PARCELAS EN ESTE EQUIPO</span>
                   <strong>{parcels.length.toString().padStart(2, '0')}</strong>
@@ -551,10 +662,10 @@ export function App() {
                   <small>
                     {drafts.length
                       ? 'Conservados en este dispositivo'
-                      : 'Todo en orden por aquí'}
+                      : 'Sin borradores locales pendientes'}
                   </small>
                 </div>
-              </div>
+              </details>
               <div className="ds-dock-tabs" role="tablist" aria-label="Panel">
                 <button
                   type="button"
@@ -598,8 +709,63 @@ export function App() {
                       Registrar parcela
                     </button>
                   </div>
+                  {workload.length > 0 && (
+                    <section
+                      className="ds-workload"
+                      aria-label="Trabajo pendiente"
+                    >
+                      <h3>
+                        Trabajo pendiente{' '}
+                        <span className="ds-count">{workload.length}</span>
+                      </h3>
+                      <ul>
+                        {workload.map((item) => (
+                          <li key={`${item.kind}-${item.parcelId}`}>
+                            <button
+                              type="button"
+                              className="ds-workload-item"
+                              onClick={() => {
+                                // A draft is continued where it lives, in the
+                                // inspections list, not by starting a new form.
+                                if (item.kind === 'draft') {
+                                  setView('inspecciones');
+                                  return;
+                                }
+                                const parcel = parcels.find(
+                                  (candidate) => candidate.id === item.parcelId,
+                                );
+                                if (parcel) setSelected(parcel);
+                              }}
+                            >
+                              <span className="ds-workload-name">
+                                {item.parcelName}
+                              </span>
+                              <span className="ds-workload-state">
+                                {item.kind === 'draft'
+                                  ? 'Borrador sin enviar'
+                                  : 'Sin registrar'}
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  )}
+                  <WorkspaceFilters
+                    subject="parcelas"
+                    search={parcelSearch}
+                    onSearch={setParcelSearch}
+                  />
+                  <p className="ds-results" role="status">
+                    {visibleParcels.length} de {parcels.length} parcelas
+                  </p>
+                  {parcels.length > 0 && visibleParcels.length === 0 && (
+                    <div className="ds-empty">
+                      Sin resultados con estos filtros.
+                    </div>
+                  )}
                   <div className="ds-parcel-grid">
-                    {parcels.map((parcel, index) => (
+                    {visibleParcels.map((parcel, index) => (
                       <article
                         className="ds-parcel-tile"
                         key={parcel.id}
@@ -608,7 +774,10 @@ export function App() {
                         <button
                           type="button"
                           className="ds-parcel-open"
-                          onClick={() => setActive(parcel)}
+                          onClick={() => {
+                            setActive(parcel);
+                            setView('mapa');
+                          }}
                           aria-label={`Ver ${parcel.name} en el mapa`}
                         >
                           <span className="ds-parcel-code">
@@ -656,8 +825,42 @@ export function App() {
                       {drafts.length + inspections.length} registros
                     </span>
                   </div>
+                  <div className="ds-queue" aria-label="Cola de trabajo">
+                    <span>En este dispositivo: {drafts.length}</span>
+                    <span>
+                      Por revisar:{' '}
+                      {
+                        inspections.filter((i) => i.status === 'submitted')
+                          .length
+                      }
+                    </span>
+                    <span>
+                      Revisadas:{' '}
+                      {
+                        inspections.filter((i) => i.status === 'reviewed')
+                          .length
+                      }
+                    </span>
+                  </div>
+                  <WorkspaceFilters
+                    subject="inspecciones"
+                    search={inspectionSearch}
+                    onSearch={setInspectionSearch}
+                    status={inspectionStatus}
+                    onStatus={setInspectionStatus}
+                  />
+                  <p className="ds-results" role="status">
+                    {visibleDrafts.length + visibleInspections.length} de{' '}
+                    {drafts.length + inspections.length} registros
+                  </p>
+                  {drafts.length + inspections.length > 0 &&
+                    visibleDrafts.length + visibleInspections.length === 0 && (
+                      <div className="ds-empty">
+                        Sin resultados con estos filtros.
+                      </div>
+                    )}
                   <div className="ds-inspection-grid">
-                    {drafts.map((draft) => (
+                    {visibleDrafts.map((draft) => (
                       <InspectionCard
                         key={draft.id}
                         inspection={
@@ -675,7 +878,7 @@ export function App() {
                         onChanged={changed}
                       />
                     ))}
-                    {inspections.map((inspection) => (
+                    {visibleInspections.map((inspection) => (
                       <InspectionCard
                         key={inspection.id}
                         inspection={inspection}
@@ -693,6 +896,15 @@ export function App() {
                     </div>
                   )}
                 </section>
+                {active && (
+                  <section id="reporte" hidden={view !== 'reporte'}>
+                    <ParcelReport
+                      parcel={active}
+                      inspections={local.data?.inspections ?? []}
+                      onClose={() => setView('mapa')}
+                    />
+                  </section>
+                )}
                 {isCoordinator && (
                   <section className="ds-export" id="exportar">
                     <div>
