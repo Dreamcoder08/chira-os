@@ -290,7 +290,6 @@
                       "notes",
                       "biosecurity",
                       "photoIds",
-                      "sampling",
                       "status",
                       "version",
                       "observedAt"
@@ -358,7 +357,6 @@
                   "notes",
                   "biosecurity",
                   "photoIds",
-                  "sampling",
                   "observedAt",
                   "operationId",
                   "expectedVersion"
@@ -423,7 +421,6 @@
                     "notes",
                     "biosecurity",
                     "photoIds",
-                    "sampling",
                     "status",
                     "version",
                     "observedAt"
@@ -516,7 +513,6 @@
                     "notes",
                     "biosecurity",
                     "photoIds",
-                    "sampling",
                     "status",
                     "version",
                     "observedAt"
@@ -620,7 +616,6 @@
                     "notes",
                     "biosecurity",
                     "photoIds",
-                    "sampling",
                     "status",
                     "version",
                     "observedAt"

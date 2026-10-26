@@ -296,7 +296,7 @@ export interface paths {
                             notes: string;
                             biosecurity: boolean;
                             photoIds: string[];
-                            sampling: {
+                            sampling?: {
                                 plantsObserved: number;
                                 plantsAffected: number;
                             } | null;
@@ -343,7 +343,7 @@ export interface paths {
                         notes: string;
                         biosecurity: boolean;
                         photoIds: string[];
-                        sampling: {
+                        sampling?: {
                             plantsObserved: number;
                             plantsAffected: number;
                         } | null;
@@ -371,7 +371,7 @@ export interface paths {
                             notes: string;
                             biosecurity: boolean;
                             photoIds: string[];
-                            sampling: {
+                            sampling?: {
                                 plantsObserved: number;
                                 plantsAffected: number;
                             } | null;
@@ -434,7 +434,7 @@ export interface paths {
                             notes: string;
                             biosecurity: boolean;
                             photoIds: string[];
-                            sampling: {
+                            sampling?: {
                                 plantsObserved: number;
                                 plantsAffected: number;
                             } | null;
@@ -498,7 +498,7 @@ export interface paths {
                             notes: string;
                             biosecurity: boolean;
                             photoIds: string[];
-                            sampling: {
+                            sampling?: {
                                 plantsObserved: number;
                                 plantsAffected: number;
                             } | null;
