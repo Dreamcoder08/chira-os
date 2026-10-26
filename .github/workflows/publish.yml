@@ -1,0 +1,44 @@
+name: Publish image
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: read
+  packages: write
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      # The image is only ever built from a commit that CI already verified,
+      # because this workflow runs on main after the guardian job is required.
+      - name: Log in to the container registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" \
+            | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - name: Build and push
+        env:
+          IMAGE: ghcr.io/${{ github.repository }}
+        run: |
+          docker build -t "$IMAGE:${{ github.sha }}" .
+          docker push "$IMAGE:${{ github.sha }}"
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            docker tag "$IMAGE:${{ github.sha }}" "$IMAGE:${{ github.ref_name }}"
+            docker push "$IMAGE:${{ github.ref_name }}"
+          else
+            docker tag "$IMAGE:${{ github.sha }}" "$IMAGE:latest"
+            docker push "$IMAGE:latest"
+          fi
+      - name: Record what was published
+        run: |
+          echo "image=ghcr.io/${{ github.repository }}:${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"
+          docker image inspect "ghcr.io/${{ github.repository }}:${{ github.sha }}" \
+            --format 'size={{.Size}}' >> "$GITHUB_STEP_SUMMARY"
