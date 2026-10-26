@@ -88,6 +88,12 @@ En el teléfono se conserva la barra inferior y los formularios en hojas con foc
 contenido y cierre mediante Escape. Las acciones de registro, revisión y exportación
 mantienen sus permisos y flujos existentes.
 
+Desde el mapa, la ficha de una parcela ofrece **Ver reporte**: una página con la identidad de la
+parcela, el total de visitas, la incidencia actual, la tendencia frente a la visita anterior y el
+detalle de las últimas visitas. Se imprime o se guarda como PDF desde el navegador, para que el
+coordinador tenga algo que entregar en una reunión. La página declara lo mismo que la aplicación:
+un conteo de plantas observadas no confirma una enfermedad.
+
 ## Piloto de campo en teléfonos
 
 Para probar el flujo offline en un teléfono real hay un perfil `pilot` que sirve el sitio

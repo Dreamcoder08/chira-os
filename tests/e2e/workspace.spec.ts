@@ -444,3 +444,22 @@ test('does not offer work that is already recorded', async ({ page }) => {
   await openWorkspace(page);
   await expect(page.getByLabel('Trabajo pendiente')).toHaveCount(0);
 });
+
+test('prints a parcel report a coordinator can hand over', async ({ page }) => {
+  await openWorkspace(page);
+  await openParcelList(page);
+  await page.getByRole('button', { name: 'Ver Los Mangos en el mapa' }).click();
+  await page.getByRole('button', { name: 'Ver reporte' }).click();
+  const report = page.getByLabel('Reporte de la parcela');
+  await expect(report).toBeVisible();
+  await expect(report.getByText('Incidencia actual')).toBeVisible();
+  await expect(
+    report.getByRole('cell', { name: '40', exact: true }),
+  ).toBeVisible();
+  await expect(
+    report.getByRole('cell', { name: '3', exact: true }),
+  ).toBeVisible();
+  // The printed page says what it is and what it is not: a page outlives the
+  // conversation that produced it.
+  await expect(report.getByText(/no confirman una enfermedad/)).toBeVisible();
+});

@@ -28,6 +28,7 @@ import { pendingWork } from './lib/workload.ts';
 import { formatShortDate } from './lib/format.ts';
 import { formatPercent } from './lib/incidence.ts';
 import { ParcelForm } from './components/ParcelForm.tsx';
+import { ParcelReport } from './components/ParcelReport.tsx';
 import {
   finishLogout,
   logoutPending,
@@ -36,7 +37,7 @@ import {
 import { Icon } from './components/icons.tsx';
 import { WorkspaceFilters } from './components/WorkspaceFilters.tsx';
 
-type View = 'parcelas' | 'mapa' | 'inspecciones';
+type View = 'parcelas' | 'mapa' | 'inspecciones' | 'reporte';
 
 const ParcelMap = lazy(() => import('./components/ParcelMap.tsx'));
 export function App() {
@@ -423,7 +424,9 @@ export function App() {
                 ? 'Mapa'
                 : view === 'inspecciones'
                   ? 'Revisión'
-                  : 'Parcelas'}
+                  : view === 'reporte'
+                    ? 'Reporte'
+                    : 'Parcelas'}
             </span>
           </div>
           <div className="ds-status">
@@ -583,6 +586,12 @@ export function App() {
                   </ol>
                 )}
               </section>
+              <button
+                className="ds-btn ds-btn--secondary"
+                onClick={() => setView('reporte')}
+              >
+                Ver reporte
+              </button>
               <button
                 className="ds-btn ds-btn--primary"
                 onClick={() => {
@@ -887,6 +896,15 @@ export function App() {
                     </div>
                   )}
                 </section>
+                {active && (
+                  <section id="reporte" hidden={view !== 'reporte'}>
+                    <ParcelReport
+                      parcel={active}
+                      inspections={local.data?.inspections ?? []}
+                      onClose={() => setView('mapa')}
+                    />
+                  </section>
+                )}
                 {isCoordinator && (
                   <section className="ds-export" id="exportar">
                     <div>
