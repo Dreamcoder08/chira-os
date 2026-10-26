@@ -25,9 +25,10 @@ jobs:
           echo "${{ secrets.GITHUB_TOKEN }}" \
             | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
       - name: Build and push
-        env:
-          IMAGE: ghcr.io/${{ github.repository }}
+        # A container reference must be lowercase, and the owner name is not
+        # (the first run failed on "repository name must be lowercase").
         run: |
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
           docker build -t "$IMAGE:${{ github.sha }}" .
           docker push "$IMAGE:${{ github.sha }}"
           if [ "${{ github.ref_type }}" = "tag" ]; then
@@ -39,6 +40,7 @@ jobs:
           fi
       - name: Record what was published
         run: |
-          echo "image=ghcr.io/${{ github.repository }}:${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"
-          docker image inspect "ghcr.io/${{ github.repository }}:${{ github.sha }}" \
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
+          echo "image=$IMAGE:${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"
+          docker image inspect "$IMAGE:${{ github.sha }}" \
             --format 'size={{.Size}}' >> "$GITHUB_STEP_SUMMARY"
