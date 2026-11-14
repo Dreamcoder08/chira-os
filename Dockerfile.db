@@ -8,7 +8,7 @@
 #   2. Alpine packages lag their fixed versions. `apk upgrade` applies the available fixes.
 # No CVE is ignored: the scanner keeps the same severity threshold as the rest of the repository.
 
-FROM postgis/postgis:17-3.6-alpine@sha256:cd7b00a457793cabd269af2af292a994754d130ac1e564ae1c053abb22b947cf
+FROM postgis/postgis:17-3.7-alpine@sha256:b6cb217138a2dafee8b1d534db58441c4e969f28cfe1f74f8e1f1781c26c3c1d
 
 RUN apk add --no-cache su-exec \
  && apk upgrade --no-cache \
